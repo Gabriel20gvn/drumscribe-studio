@@ -50,10 +50,7 @@
       color: var(--primary);
     }
 
-    .header-actions {
-      display: flex;
-      gap: 8px;
-    }
+    .header-actions { display: flex; gap: 8px; }
 
     .btn {
       background: var(--surface-2);
@@ -68,6 +65,7 @@
       align-items: center;
       gap: 6px;
       transition: 0.15s;
+      text-decoration: none;
     }
     .btn:hover { filter: brightness(1.1); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -75,17 +73,9 @@
     .btn-accent { background: var(--accent); color: #052e16; border-color: var(--accent); }
     .btn-active { background: var(--warn); color: #0f172a; border-color: var(--warn); }
 
-    .container {
-      max-width: 1100px;
-      margin: 16px auto;
-      padding: 0 12px;
-    }
+    .container { max-width: 1100px; margin: 16px auto; padding: 0 12px; }
 
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
     .tab-btn {
       flex: 1;
       padding: 10px;
@@ -111,14 +101,36 @@
       margin-bottom: 14px;
     }
 
-    .grid-form {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
+    .server-bar {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
     }
-    @media (min-width: 700px) {
-      .grid-form { grid-template-columns: 2fr 1fr 1fr; }
+    .server-status {
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--danger);
+      display: inline-block;
+    }
+    .dot.online { background: var(--accent); }
+
+    .grid-form { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 700px) { .grid-form { grid-template-columns: 2fr 1fr 1fr; } }
 
     label {
       display: block;
@@ -138,10 +150,7 @@
       font-size: 0.9rem;
     }
 
-    .progress-wrap {
-      margin-top: 14px;
-      display: none;
-    }
+    .progress-wrap { margin-top: 14px; display: none; }
     .progress-bar-bg {
       width: 100%;
       height: 10px;
@@ -157,7 +166,6 @@
       transition: width 0.4s ease;
     }
 
-    /* Mixer Multifaixas */
     .mixer-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -192,12 +200,8 @@
     .ms-btn.mute.active { background: var(--danger); color: #fff; border-color: var(--danger); }
     .ms-btn.solo.active { background: var(--warn); color: #000; border-color: var(--warn); }
 
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--primary);
-    }
+    input[type="range"] { width: 100%; accent-color: var(--primary); }
 
-    /* Área da Partitura AlphaTab */
     .score-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -216,16 +220,9 @@
     }
 
     body.reading-mode header,
-    body.reading-mode .setup-section {
-      display: none !important;
-    }
-    body.reading-mode .container {
-      max-width: 100%;
-      margin: 0;
-      padding: 4px;
-    }
+    body.reading-mode .setup-section { display: none !important; }
+    body.reading-mode .container { max-width: 100%; margin: 0; padding: 4px; }
 
-    /* Barra Fixa de Transporte (Player) */
     .transport-bar {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -240,11 +237,7 @@
       gap: 10px;
       z-index: 50;
     }
-    .transport-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .transport-controls { display: flex; align-items: center; gap: 8px; }
     .timeline-box {
       flex: 1;
       min-width: 180px;
@@ -270,12 +263,25 @@
 <div class="container">
   <div class="setup-section">
     <div class="tabs">
-      <button class="tab-btn active" data-tab="youtubeTab">🎬 Gerar do YouTube (Backend)</button>
+      <button class="tab-btn active" data-tab="youtubeTab">🎬 Gerar do YouTube (GPU Colab)</button>
       <button class="tab-btn" data-tab="localTab">📱 Abrir do Celular / Google Drive</button>
     </div>
 
-    <!-- ABA 1: YOUTUBE + BACKEND -->
+    <!-- ABA 1: YOUTUBE + BACKEND COLAB -->
     <div id="youtubeTab" class="card">
+      <div class="server-bar">
+        <div style="flex:1; min-width:220px;">
+          <label for="apiBaseUrl">Link do Servidor Backend (Google Colab)</label>
+          <input type="text" id="apiBaseUrl" placeholder="https://xxxx.trycloudflare.com" />
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="server-status" id="serverStatusText">
+            <span class="dot" id="serverDot"></span> Desconectado
+          </span>
+          <button id="testServerBtn" class="btn" type="button">Testar Conexão</button>
+        </div>
+      </div>
+
       <div class="grid-form">
         <div>
           <label for="ytUrl">Link da Música no YouTube</label>
@@ -320,10 +326,10 @@
       </div>
     </div>
 
-    <!-- ABA 2: ABRIR ARQUIVOS DO DRIVE / CELULAR (GERADOS NO COLAB) -->
+    <!-- ABA 2: ABRIR ARQUIVOS DO DRIVE / CELULAR -->
     <div id="localTab" class="card hidden">
       <p style="font-size:0.85rem; color:var(--muted); margin-bottom:10px;">
-        Selecione os arquivos salvos no seu <strong>Google Drive</strong> ou memória do celular (gerados pelo Google Colab ou baixados anteriormente):
+        Selecione os arquivos salvos no seu <strong>Google Drive</strong> ou memória do celular:
       </p>
       <div class="grid-form">
         <div>
@@ -409,7 +415,7 @@
     </div>
     <div id="alphaTabContainer">
       <p style="padding:30px; text-align:center; color:#475569;">
-        Cole um link do YouTube acima ou carregue um arquivo <strong>.musicxml</strong> do seu Google Drive para visualizar a partitura de bateria com a letra em cima de cada compasso.
+        Inicie o servidor no Google Colab para conectar o backend acima ou carregue um arquivo <strong>.musicxml</strong> do seu Google Drive.
       </p>
     </div>
   </div>
@@ -429,6 +435,57 @@
 </div>
 
 <script>
+  // --- 0. Configuração Dinâmica do Backend (Colab / Tunnel) ---
+  const apiBaseInput = document.getElementById('apiBaseUrl');
+  const serverStatusText = document.getElementById('serverStatusText');
+  const testServerBtn = document.getElementById('testServerBtn');
+
+  function getApiBase() {
+    const val = apiBaseInput.value.trim().replace(/\/+$/, '');
+    if (val) localStorage.setItem('drumscribe_api_base', val);
+    return val;
+  }
+
+  function apiUrl(path) {
+    const base = getApiBase();
+    return base ? `${base}${path}` : path;
+  }
+
+  async function checkServerConnection() {
+    const base = getApiBase();
+    if (!base && window.location.hostname.includes('github.io')) {
+      serverStatusText.innerHTML = '<span class="dot"></span> Cole o link do Colab';
+      return false;
+    }
+    try {
+      const resp = await fetch(apiUrl('/api/status/ping'));
+      if (resp.status === 404 || resp.ok) {
+        serverStatusText.innerHTML = '<span class="dot online"></span> Servidor Conectado';
+        return true;
+      }
+    } catch (e) {
+      serverStatusText.innerHTML = '<span class="dot"></span> Offline / Link expirado';
+    }
+    return false;
+  }
+
+  (function initApiFromUrlOrStorage() {
+    const params = new URLSearchParams(window.location.search);
+    const paramApi = params.get('api');
+    if (paramApi) {
+      const clean = paramApi.trim().replace(/\/+$/, '');
+      apiBaseInput.value = clean;
+      localStorage.setItem('drumscribe_api_base', clean);
+    } else {
+      const saved = localStorage.getItem('drumscribe_api_base');
+      if (saved) apiBaseInput.value = saved;
+    }
+    checkServerConnection();
+  })();
+
+  testServerBtn.addEventListener('click', checkServerConnection);
+  apiBaseInput.addEventListener('change', checkServerConnection);
+
   // --- 1. Alternância de Abas ---
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -440,14 +497,11 @@
     });
   });
 
-  // --- 2. Screen Wake Lock (Manter tela acesa no celular) ---
+  // --- 2. Screen Wake Lock ---
   let wakeLock = null;
   const wakeLockBtn = document.getElementById('wakeLockBtn');
   wakeLockBtn.addEventListener('click', async () => {
-    if (!('wakeLock' in navigator)) {
-      alert('Seu navegador não suporta bloqueio de descanso de tela.');
-      return;
-    }
+    if (!('wakeLock' in navigator)) return alert('Seu navegador não suporta bloqueio de descanso de tela.');
     try {
       if (!wakeLock) {
         wakeLock = await navigator.wakeLock.request('screen');
@@ -461,12 +515,10 @@
       } else {
         await wakeLock.release();
       }
-    } catch (err) {
-      console.warn('WakeLock erro:', err);
-    }
+    } catch (err) { console.warn(err); }
   });
 
-  // --- 3. Modo Leitura Tela Cheia ---
+  // --- 3. Modo Leitura ---
   const readingModeBtn = document.getElementById('readingModeBtn');
   const exitReadingBtn = document.getElementById('exitReadingBtn');
   function toggleReadingMode() {
@@ -478,38 +530,22 @@
   readingModeBtn.addEventListener('click', toggleReadingMode);
   exitReadingBtn.addEventListener('click', toggleReadingMode);
 
-  // --- 4. Renderização AlphaTab ---
+  // --- 4. AlphaTab ---
   let alphaApi = null;
   function loadScoreIntoAlphaTab(urlOrBuffer) {
     const container = document.getElementById('alphaTabContainer');
     container.innerHTML = '';
-    if (alphaApi) {
-      alphaApi.destroy();
-      alphaApi = null;
-    }
+    if (alphaApi) { alphaApi.destroy(); alphaApi = null; }
 
     alphaApi = new alphaTab.AlphaTabApi(container, {
-      core: {
-        engine: 'svg',
-        logLevel: 'warning'
-      },
-      display: {
-        layoutMode: alphaTab.LayoutMode.Page,
-        staveProfile: alphaTab.StaveProfile.Score
-      },
-      player: {
-        enablePlayer: false // Usamos nossos stems reais sincronizados
-      }
+      core: { engine: 'svg', logLevel: 'warning' },
+      display: { layoutMode: alphaTab.LayoutMode.Page, staveProfile: alphaTab.StaveProfile.Score },
+      player: { enablePlayer: false }
     });
-
-    if (typeof urlOrBuffer === 'string') {
-      alphaApi.load(urlOrBuffer);
-    } else {
-      alphaApi.load(urlOrBuffer);
-    }
+    alphaApi.load(urlOrBuffer);
   }
 
-  // --- 5. Engine de Áudio Multifaixas Sincronizado ---
+  // --- 5. Mixer Multifaixas ---
   const tracks = {
     drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
     no_drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
@@ -519,16 +555,13 @@
   Object.values(tracks).forEach(t => {
     t.audio.preload = 'auto';
     t.audio.preservesPitch = true;
+    t.audio.crossOrigin = 'anonymous';
   });
 
   function updateMixerVolumes() {
     const anySolo = Object.values(tracks).some(t => t.solo);
     Object.values(tracks).forEach(t => {
-      if (anySolo) {
-        t.audio.volume = t.solo ? t.vol : 0;
-      } else {
-        t.audio.volume = t.mute ? 0 : t.vol;
-      }
+      t.audio.volume = anySolo ? (t.solo ? t.vol : 0) : (t.mute ? 0 : t.vol);
     });
   }
 
@@ -538,17 +571,12 @@
     const muteBtn = strip.querySelector('[data-action="mute"]');
     const soloBtn = strip.querySelector('[data-action="solo"]');
 
-    slider.addEventListener('input', () => {
-      tracks[name].vol = parseFloat(slider.value);
-      updateMixerVolumes();
-    });
-
+    slider.addEventListener('input', () => { tracks[name].vol = parseFloat(slider.value); updateMixerVolumes(); });
     muteBtn.addEventListener('click', () => {
       tracks[name].mute = !tracks[name].mute;
       muteBtn.classList.toggle('active', tracks[name].mute);
       updateMixerVolumes();
     });
-
     soloBtn.addEventListener('click', () => {
       tracks[name].solo = !tracks[name].solo;
       soloBtn.classList.toggle('active', tracks[name].solo);
@@ -563,10 +591,9 @@
   }
 
   function getMasterTrack() {
-    if (tracks.no_drums.loaded) return tracks.no_drums.audio;
-    if (tracks.drums.loaded) return tracks.drums.audio;
-    if (tracks.vocals.loaded) return tracks.vocals.audio;
-    return null;
+    return tracks.no_drums.loaded ? tracks.no_drums.audio :
+           tracks.drums.loaded ? tracks.drums.audio :
+           tracks.vocals.loaded ? tracks.vocals.audio : null;
   }
 
   const playPauseBtn = document.getElementById('playPauseBtn');
@@ -579,49 +606,33 @@
 
   function formatTime(sec) {
     if (!isFinite(sec)) return '00:00';
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
   }
 
   let isPlaying = false;
 
   playPauseBtn.addEventListener('click', async () => {
     const master = getMasterTrack();
-    if (!master) {
-      alert('Carregue uma música primeiro.');
-      return;
-    }
+    if (!master) return alert('Carregue uma música primeiro.');
 
     if (!isPlaying) {
       const t = master.currentTime;
       const rate = parseFloat(speedSlider.value);
       updateMixerVolumes();
       for (const tr of Object.values(tracks)) {
-        if (tr.loaded) {
-          tr.audio.currentTime = t;
-          tr.audio.playbackRate = rate;
-          await tr.audio.play();
-        }
+        if (tr.loaded) { tr.audio.currentTime = t; tr.audio.playbackRate = rate; await tr.audio.play(); }
       }
       isPlaying = true;
       playPauseBtn.textContent = '⏸ Pausar';
     } else {
-      for (const tr of Object.values(tracks)) {
-        if (tr.loaded) tr.audio.pause();
-      }
+      for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.pause(); }
       isPlaying = false;
       playPauseBtn.textContent = '▶ Tocar';
     }
   });
 
   stopBtn.addEventListener('click', () => {
-    for (const tr of Object.values(tracks)) {
-      if (tr.loaded) {
-        tr.audio.pause();
-        tr.audio.currentTime = 0;
-      }
-    }
+    for (const tr of Object.values(tracks)) { if (tr.loaded) { tr.audio.pause(); tr.audio.currentTime = 0; } }
     isPlaying = false;
     playPauseBtn.textContent = '▶ Tocar';
     seekSlider.value = 0;
@@ -631,18 +642,14 @@
   speedSlider.addEventListener('input', () => {
     const rate = parseFloat(speedSlider.value);
     speedVal.textContent = `${Math.round(rate * 100)}%`;
-    for (const tr of Object.values(tracks)) {
-      if (tr.loaded) tr.audio.playbackRate = rate;
-    }
+    for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.playbackRate = rate; }
   });
 
   seekSlider.addEventListener('input', () => {
     const master = getMasterTrack();
     if (!master || !isFinite(master.duration)) return;
     const targetTime = (parseFloat(seekSlider.value) / 100) * master.duration;
-    for (const tr of Object.values(tracks)) {
-      if (tr.loaded) tr.audio.currentTime = targetTime;
-    }
+    for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.currentTime = targetTime; }
   });
 
   setInterval(() => {
@@ -652,7 +659,6 @@
     timeTotal.textContent = formatTime(master.duration);
     seekSlider.value = (master.currentTime / master.duration) * 100;
 
-    // Mantém faixas alinhadas se houver pequeno desvio no mobile
     if (isPlaying) {
       for (const tr of Object.values(tracks)) {
         if (tr.loaded && tr.audio !== master && Math.abs(tr.audio.currentTime - master.currentTime) > 0.08) {
@@ -662,7 +668,7 @@
     }
   }, 250);
 
-  // --- 6. Integração com Backend FastAPI (YouTube) ---
+  // --- 6. Integração com Backend (YouTube) ---
   const generateBtn = document.getElementById('generateBtn');
   const progressWrap = document.getElementById('progressWrap');
   const progressText = document.getElementById('progressText');
@@ -671,9 +677,10 @@
 
   generateBtn.addEventListener('click', async () => {
     const url = document.getElementById('ytUrl').value.trim();
-    if (!url) {
-      alert('Cole o link de um vídeo do YouTube.');
-      return;
+    if (!url) return alert('Cole o link de um vídeo do YouTube.');
+
+    if (!getApiBase() && window.location.hostname.includes('github.io')) {
+      return alert('Cole primeiro o Link do Servidor Backend gerado no Google Colab (ex.: https://xxxx.trycloudflare.com).');
     }
 
     const formData = new FormData();
@@ -683,23 +690,21 @@
     formData.append('language', document.getElementById('whisperLang').value);
 
     const cookiesInput = document.getElementById('cookiesFile');
-    if (cookiesInput.files.length > 0) {
-      formData.append('cookies_file', cookiesInput.files[0]);
-    }
+    if (cookiesInput.files.length > 0) formData.append('cookies_file', cookiesInput.files[0]);
 
     generateBtn.disabled = true;
     progressWrap.style.display = 'block';
-    progressText.textContent = 'Enviando tarefa para o servidor...';
+    progressText.textContent = 'Enviando tarefa para o servidor GPU...';
     progressPct.textContent = '5%';
     progressFill.style.width = '5%';
 
     try {
-      const resp = await fetch('/api/process', { method: 'POST', body: formData });
-      if (!resp.ok) throw new Error('Falha ao iniciar o processamento.');
+      const resp = await fetch(apiUrl('/api/process'), { method: 'POST', body: formData });
+      if (!resp.ok) throw new Error('Não foi possível conectar ao servidor backend. Verifique se o Google Colab está rodando.');
       const { job_id } = await resp.json();
 
       const poll = setInterval(async () => {
-        const stResp = await fetch(`/api/status/${job_id}`);
+        const stResp = await fetch(apiUrl(`/api/status/${job_id}`));
         const st = await stResp.json();
 
         progressText.textContent = st.step || 'Processando...';
@@ -714,16 +719,15 @@
           document.getElementById('songTitleDisplay').textContent = res.title;
           document.getElementById('songMetaDisplay').textContent = `• ${res.bpm} BPM • ${res.measures} compassos`;
 
-          loadScoreIntoAlphaTab(`/api/files/${job_id}/${res.musicxml}`);
+          loadScoreIntoAlphaTab(apiUrl(`/api/files/${job_id}/${res.musicxml}`));
 
-          if (res.audio_mp3.drums) setTrackSource('drums', `/api/files/${job_id}/${res.audio_mp3.drums}`);
-          if (res.audio_mp3.no_drums) setTrackSource('no_drums', `/api/files/${job_id}/${res.audio_mp3.no_drums}`);
-          if (res.audio_mp3.vocals) setTrackSource('vocals', `/api/files/${job_id}/${res.audio_mp3.vocals}`);
+          if (res.audio_mp3.drums) setTrackSource('drums', apiUrl(`/api/files/${job_id}/${res.audio_mp3.drums}`));
+          if (res.audio_mp3.no_drums) setTrackSource('no_drums', apiUrl(`/api/files/${job_id}/${res.audio_mp3.no_drums}`));
+          if (res.audio_mp3.vocals) setTrackSource('vocals', apiUrl(`/api/files/${job_id}/${res.audio_mp3.vocals}`));
 
-          const dlDiv = document.getElementById('downloadLinks');
-          dlDiv.innerHTML = `
-            <a class="btn" href="/api/files/${job_id}/${res.musicxml}" download>📄 Baixar MusicXML</a>
-            <a class="btn btn-accent" href="/api/files/${job_id}/${res.zip}" download>📦 Baixar Kit WAV + MIDI (.zip)</a>
+          document.getElementById('downloadLinks').innerHTML = `
+            <a class="btn" href="${apiUrl(`/api/files/${job_id}/${res.musicxml}`)}" download>📄 Baixar MusicXML</a>
+            <a class="btn btn-accent" href="${apiUrl(`/api/files/${job_id}/${res.zip}`)}" download>📦 Baixar Kit WAV + MIDI (.zip)</a>
           `;
         } else if (st.status === 'error') {
           clearInterval(poll);
@@ -731,24 +735,20 @@
           alert('Erro no servidor: ' + st.error);
         }
       }, 2500);
-
     } catch (err) {
       generateBtn.disabled = false;
       alert(err.message);
     }
   });
 
-  // --- 7. Modo Local / Google Drive (Arquivos gerados no Colab) ---
+  // --- 7. Modo Local / Google Drive ---
   document.getElementById('loadLocalBtn').addEventListener('click', async () => {
     const xmlFile = document.getElementById('localXml').files[0];
     const drumsFile = document.getElementById('localDrums').files[0];
     const playbackFile = document.getElementById('localPlayback').files[0];
     const vocalsFile = document.getElementById('localVocals').files[0];
 
-    if (!xmlFile) {
-      alert('Selecione pelo menos o arquivo .musicxml da partitura.');
-      return;
-    }
+    if (!xmlFile) return alert('Selecione pelo menos o arquivo .musicxml da partitura.');
 
     const buffer = await xmlFile.arrayBuffer();
     loadScoreIntoAlphaTab(new Uint8Array(buffer));

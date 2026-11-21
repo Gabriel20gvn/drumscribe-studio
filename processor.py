@@ -1,12 +1,17 @@
 import os
 import re
 import glob
+import json
 import math
+import time
+import uuid
+import base64
 import shutil
 import zipfile
 import subprocess
-from typing import Callable, Optional, Dict, Any
+from typing import Callable, Optional, Dict, Any, List
 
+import requests
 import numpy as np
 import soundfile as sf
 import librosa
@@ -21,7 +26,17 @@ def sanitize_filename(name: str) -> str:
     return clean[:80] if clean else "musica_drumscribe"
 
 
-def run_ffmpeg_convert(input_path: str, output_path: str, bitrate: str = "192k"):
+def get_library_root(base_dir: str) -> str:
+    drive_root = "/content/drive/MyDrive"
+    if os.path.isdir(drive_root):
+        lib_dir = os.path.join(drive_root, "DrumScribe_Biblioteca")
+    else:
+        lib_dir = os.path.join(base_dir, "library")
+    os.makedirs(lib_dir, exist_ok=True)
+    return lib_dir
+
+
+def run_ffmpeg_convert(input_path: str, output_path: str, bitrate: str = "160k"):
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
         "-i", input_path,
@@ -156,7 +171,7 @@ def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = N
         return _download_with_pytubefix(url, job_dir)
     except Exception as ptf_exc:
         raise RuntimeError(
-            f"Não foi possível extrair o áudio deste link no servidor Colab. "
+            f"Não foi possível extrair o áudio deste link. "
             f"(yt-dlp: {last_error} | pytubefix: {ptf_exc})"
         )
 
@@ -202,7 +217,7 @@ def separate_with_demucs(wav_path: str, job_dir: str, model: str = "htdemucs") -
     mp3_stems = {}
     for key, wpath in stems.items():
         mp3_path = os.path.join(job_dir, f"{key}.mp3")
-        run_ffmpeg_convert(wpath, mp3_path, bitrate="192k")
+        run_ffmpeg_convert(wpath, mp3_path, bitrate="160k")
         mp3_stems[key] = os.path.basename(mp3_path)
 
     return {"wav": stems, "mp3": mp3_stems}
@@ -251,7 +266,7 @@ def transcribe_drums_and_lyrics(
     progress_cb: Optional[Callable[[int, str], None]] = None
 ) -> Dict[str, Any]:
     if progress_cb:
-        progress_cb(62, "Analisando andamento (BPM) e transientes da bateria...")
+        progress_cb(60, "Analisando andamento (BPM) e transientes da bateria...")
 
     y, sr = librosa.load(drums_wav, sr=22050, mono=True)
     duration_sec = librosa.get_duration(y=y, sr=sr)
@@ -299,7 +314,7 @@ def transcribe_drums_and_lyrics(
     lyrics_by_measure: Dict[int, list[str]] = {}
     if vocals_wav and os.path.exists(vocals_wav):
         if progress_cb:
-            progress_cb(78, f"Transcrevendo letra com Whisper ({whisper_model_name}) e alinhando compassos...")
+            progress_cb(75, f"Transcrevendo letra com Whisper ({whisper_model_name}) e alinhando compassos...")
         w_model = whisper.load_model(whisper_model_name)
         lang_arg = None if language == "auto" else language
         result = w_model.transcribe(
@@ -324,7 +339,7 @@ def transcribe_drums_and_lyrics(
                     lyrics_by_measure.setdefault(m_idx, []).append(s_text)
 
     if progress_cb:
-        progress_cb(90, "Montando partitura MusicXML com clave de percussão e letras...")
+        progress_cb(86, "Montando partitura MusicXML com clave de percussão e letras...")
 
     score = stream.Score()
     score.insert(0, metadata.Metadata())
@@ -387,10 +402,14 @@ def transcribe_drums_and_lyrics(
                 m.append(n)
             else:
                 ordered_pieces = [p for p in ["kick", "snare", "hihat", "crash"] if p in hits]
-                c = chord.Chord([pitch_map[p][0] for p in ordered_pieces], quarterLength=quarter_len)
-                for idx_n, p in enumerate(ordered_pieces):
-                    if pitch_map[p][1] != "normal":
-                        c.noteheads[idx_n] = pitch_map[p][1]
+                chord_notes = []
+                for p in ordered_pieces:
+                    p_name, n_head = pitch_map[p]
+                    cn = note.Note(p_name, quarterLength=quarter_len)
+                    if n_head != "normal":
+                        cn.notehead = n_head
+                    chord_notes.append(cn)
+                c = chord.Chord(chord_notes, quarterLength=quarter_len)
                 m.append(c)
 
             step_offset += dur_steps
@@ -412,6 +431,170 @@ def transcribe_drums_and_lyrics(
     }
 
 
+def _github_put_file(repo: str, path: str, content_bytes: bytes, token: str, message: str):
+    api_url = f"https://api.github.com/repos/{repo}/contents/{path}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    sha = None
+    get_resp = requests.get(api_url, headers=headers, timeout=20)
+    if get_resp.status_code == 200:
+        sha = get_resp.json().get("sha")
+
+    payload: Dict[str, Any] = {
+        "message": message,
+        "content": base64.b64encode(content_bytes).decode("ascii"),
+    }
+    if sha:
+        payload["sha"] = sha
+
+    put_resp = requests.put(api_url, headers=headers, json=payload, timeout=60)
+    if put_resp.status_code not in (200, 201):
+        raise RuntimeError(f"GitHub API ({path}): {put_resp.status_code} - {put_resp.text[:200]}")
+
+
+def push_item_to_github_library(
+    job_dir: str,
+    meta: Dict[str, Any],
+    github_token: str,
+    github_repo: str = "Gabriel20gvn/drumscribe-studio",
+) -> bool:
+    item_id = meta["id"]
+    files_to_upload = [
+        ("partitura_bateria.musicxml", meta.get("musicxml")),
+        ("drums.mp3", meta.get("audio_mp3", {}).get("drums")),
+        ("no_drums.mp3", meta.get("audio_mp3", {}).get("no_drums")),
+        ("vocals.mp3", meta.get("audio_mp3", {}).get("vocals")),
+    ]
+
+    for target_name, local_name in files_to_upload:
+        if not local_name:
+            continue
+        local_path = os.path.join(job_dir, local_name)
+        if os.path.exists(local_path):
+            with open(local_path, "rb") as f:
+                _github_put_file(
+                    repo=github_repo,
+                    path=f"library/{item_id}/{target_name}",
+                    content_bytes=f.read(),
+                    token=github_token,
+                    message=f"Add {target_name} for {meta['title']}"
+                )
+
+    index_url = f"https://api.github.com/repos/{github_repo}/contents/library/index.json"
+    headers = {
+        "Authorization": f"Bearer {github_token}",
+        "Accept": "application/vnd.github+json",
+    }
+    catalog: List[Dict[str, Any]] = []
+    get_idx = requests.get(index_url, headers=headers, timeout=20)
+    if get_idx.status_code == 200:
+        try:
+            raw_b64 = get_idx.json().get("content", "")
+            catalog = json.loads(base64.b64decode(raw_b64).decode("utf-8"))
+        except Exception:
+            catalog = []
+
+    catalog = [entry for entry in catalog if entry.get("id") != item_id]
+    catalog.insert(0, {
+        "id": item_id,
+        "title": meta["title"],
+        "bpm": meta["bpm"],
+        "measures": meta["measures"],
+        "created_at": meta["created_at"],
+        "musicxml": f"library/{item_id}/partitura_bateria.musicxml",
+        "audio_mp3": {
+            "drums": f"library/{item_id}/drums.mp3" if meta["audio_mp3"].get("drums") else None,
+            "no_drums": f"library/{item_id}/no_drums.mp3" if meta["audio_mp3"].get("no_drums") else None,
+            "vocals": f"library/{item_id}/vocals.mp3" if meta["audio_mp3"].get("vocals") else None,
+        }
+    })
+
+    _github_put_file(
+        repo=github_repo,
+        path="library/index.json",
+        content_bytes=json.dumps(catalog, ensure_ascii=False, indent=2).encode("utf-8"),
+        token=github_token,
+        message=f"Update library catalog: {meta['title']}"
+    )
+    return True
+
+
+def delete_item_from_github_library(
+    item_id: str,
+    github_token: str,
+    github_repo: str = "Gabriel20gvn/drumscribe-studio",
+):
+    headers = {
+        "Authorization": f"Bearer {github_token}",
+        "Accept": "application/vnd.github+json",
+    }
+    index_url = f"https://api.github.com/repos/{github_repo}/contents/library/index.json"
+    get_idx = requests.get(index_url, headers=headers, timeout=20)
+    if get_idx.status_code == 200:
+        raw_b64 = get_idx.json().get("content", "")
+        catalog = json.loads(base64.b64decode(raw_b64).decode("utf-8"))
+        catalog = [entry for entry in catalog if entry.get("id") != item_id]
+        _github_put_file(
+            repo=github_repo,
+            path="library/index.json",
+            content_bytes=json.dumps(catalog, ensure_ascii=False, indent=2).encode("utf-8"),
+            token=github_token,
+            message=f"Remove {item_id} from library catalog"
+        )
+
+    for fname in ["partitura_bateria.musicxml", "drums.mp3", "no_drums.mp3", "vocals.mp3"]:
+        f_url = f"https://api.github.com/repos/{github_repo}/contents/library/{item_id}/{fname}"
+        r = requests.get(f_url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            sha = r.json().get("sha")
+            requests.delete(
+                f_url,
+                headers=headers,
+                json={"message": f"Delete {fname}", "sha": sha},
+                timeout=20,
+            )
+
+
+def save_to_library(job_dir: str, result_data: Dict[str, Any], base_dir: str) -> Dict[str, Any]:
+    lib_root = get_library_root(base_dir)
+    item_id = f"{int(time.time())}_{uuid.uuid4().hex[:6]}"
+    item_dir = os.path.join(lib_root, item_id)
+    os.makedirs(item_dir, exist_ok=True)
+
+    files_to_copy = [
+        result_data.get("musicxml"),
+        result_data.get("midi"),
+        result_data.get("zip"),
+    ]
+    for mp3_name in result_data.get("audio_mp3", {}).values():
+        files_to_copy.append(mp3_name)
+
+    for fname in files_to_copy:
+        if fname:
+            src = os.path.join(job_dir, fname)
+            if os.path.exists(src):
+                shutil.copy2(src, os.path.join(item_dir, fname))
+
+    meta = {
+        "id": item_id,
+        "title": result_data["title"],
+        "bpm": result_data["bpm"],
+        "measures": result_data["measures"],
+        "created_at": time.time(),
+        "musicxml": result_data["musicxml"],
+        "midi": result_data["midi"],
+        "zip": result_data["zip"],
+        "audio_mp3": result_data["audio_mp3"],
+    }
+    with open(os.path.join(item_dir, "meta.json"), "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
+
+    return meta
+
+
 def process_full_pipeline(
     url: str,
     job_dir: str,
@@ -421,6 +604,9 @@ def process_full_pipeline(
     cookies_path: Optional[str] = None,
     uploaded_media_path: Optional[str] = None,
     uploaded_media_name: Optional[str] = None,
+    base_dir: Optional[str] = None,
+    github_token: Optional[str] = None,
+    github_repo: str = "Gabriel20gvn/drumscribe-studio",
     progress_cb: Optional[Callable[[int, str], None]] = None
 ) -> Dict[str, Any]:
     if uploaded_media_path and os.path.exists(uploaded_media_path):
@@ -454,7 +640,7 @@ def process_full_pipeline(
     )
 
     if progress_cb:
-        progress_cb(96, "Empacotando arquivos WAV, MIDI e MusicXML...")
+        progress_cb(91, "Empacotando arquivos WAV, MIDI e MusicXML...")
 
     zip_filename = f"{title}_kit_bateria.zip"
     zip_path = os.path.join(job_dir, zip_filename)
@@ -472,7 +658,7 @@ def process_full_pipeline(
             if os.path.exists(fpath):
                 zf.write(fpath, arcname=fname)
 
-    return {
+    result_payload: Dict[str, Any] = {
         "title": title,
         "bpm": score_info["bpm"],
         "measures": score_info["measures"],
@@ -480,4 +666,22 @@ def process_full_pipeline(
         "midi": score_info["midi"],
         "zip": zip_filename,
         "audio_mp3": stems["mp3"],
+        "cloud_synced": False,
     }
+
+    if base_dir:
+        meta = save_to_library(job_dir, result_payload, base_dir)
+        result_payload["library_id"] = meta["id"]
+
+        effective_token = (github_token or os.environ.get("GITHUB_TOKEN") or "").strip()
+        effective_repo = (github_repo or os.environ.get("GITHUB_REPO") or "Gabriel20gvn/drumscribe-studio").strip()
+        if effective_token:
+            if progress_cb:
+                progress_cb(96, "Publicando partitura e stems na Biblioteca Nuvem (acesso no celular)...")
+            try:
+                push_item_to_github_library(job_dir, meta, effective_token, effective_repo)
+                result_payload["cloud_synced"] = True
+            except Exception as sync_exc:
+                result_payload["cloud_sync_error"] = str(sync_exc)
+
+    return result_payload

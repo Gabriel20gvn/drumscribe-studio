@@ -184,7 +184,6 @@
       transition: width 0.4s ease;
     }
 
-    /* BIBLIOTECA */
     .library-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -344,7 +343,6 @@
       <button class="tab-btn" data-tab="localTab">📱 Abrir Arquivo</button>
     </div>
 
-    <!-- ABA 1: BIBLIOTECA NA NUVEM + CACHE OFFLINE -->
     <div id="libraryTab" class="card">
       <div class="library-toolbar">
         <div style="flex:1; min-width:220px;">
@@ -356,16 +354,15 @@
         </div>
       </div>
       <div id="libraryList" class="library-grid">
-        <p style="color:var(--muted); font-size:0.88rem;">Carregando biblioteca...</p>
+        <p style="color:var(--muted); font-size:0.88rem;">Nenhuma partitura na biblioteca ainda. Gere sua primeira música na aba <strong>🎬 Gerar Partitura</strong>!</p>
       </div>
     </div>
 
-    <!-- ABA 2: GERAR NOVA PARTITURA NO COMPUTADOR -->
     <div id="youtubeTab" class="card hidden">
       <div class="server-bar">
         <div style="flex:1; min-width:220px;">
-          <label for="apiBaseUrl">Link do Servidor Backend (PC Local ou Colab)</label>
-          <input type="text" id="apiBaseUrl" placeholder="http://127.0.0.1:8000 ou https://xxxx.trycloudflare.com" />
+          <label for="apiBaseUrl">Link do Servidor Backend (Colab ou Local)</label>
+          <input type="text" id="apiBaseUrl" placeholder="https://xxxx.trycloudflare.com" />
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
           <span class="server-status" id="serverStatusText">
@@ -413,14 +410,14 @@
       </div>
 
       <details class="cloud-config" id="cloudConfigDetails">
-        <summary>☁️ Configurar Sincronização Automática para o Celular (Opcional — Configure 1x no PC)</summary>
+        <summary>☁️ Configurar Sincronização Automática para o Celular (Configure 1x no PC)</summary>
         <p style="font-size:0.78rem; color:var(--muted); margin:8px 0;">
-          Cole um <strong>GitHub Personal Access Token</strong> (permissão <code>Contents: Read and write</code> no repositório <code>drumscribe-studio</code>). Ele fica salvo apenas no navegador deste PC e envia cada partitura gerada para a nuvem do seu site, permitindo abrir no celular de qualquer lugar mesmo com o PC desligado.
+          Cole seu <strong>GitHub Personal Access Token</strong> (permissão <code>Contents: Read and write</code> no repositório <code>drumscribe-studio</code>). Ele fica salvo apenas neste navegador e envia cada partitura gerada para o celular.
         </p>
         <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
           <div>
-            <label for="githubTokenInput">GitHub Token (ghp_... ou github_pat_...)</label>
-            <input type="password" id="githubTokenInput" placeholder="Cole seu token aqui (salvo só neste PC)" />
+            <label for="githubTokenInput">GitHub Token (github_pat_... ou ghp_...)</label>
+            <input type="password" id="githubTokenInput" placeholder="Cole seu token aqui" />
           </div>
           <div>
             <label for="githubRepoInput">Repositório GitHub</label>
@@ -440,7 +437,6 @@
       </div>
     </div>
 
-    <!-- ABA 3: ABRIR ARQUIVOS LOCAIS -->
     <div id="localTab" class="card hidden">
       <p style="font-size:0.85rem; color:var(--muted); margin-bottom:10px;">
         Selecione uma partitura <strong>.musicxml</strong> e os áudios salvos no dispositivo:
@@ -470,7 +466,6 @@
       </div>
     </div>
 
-    <!-- MIXER DE FAIXAS -->
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <strong style="font-size:0.95rem;">🎛️ Mixer de Estudo (Stems Sincronizados)</strong>
@@ -514,7 +509,6 @@
     </div>
   </div>
 
-  <!-- PARTITURA INTERATIVA -->
   <div class="card" id="scoreCard">
     <div class="score-toolbar">
       <div>
@@ -535,7 +529,6 @@
   </div>
 </div>
 
-<!-- BARRA DE TRANSPORTE -->
 <div class="transport-bar">
   <div class="transport-controls">
     <button id="playPauseBtn" class="btn btn-primary">▶ Tocar</button>
@@ -549,12 +542,32 @@
 </div>
 
 <script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('youtubeTab').classList.add('hidden');
+      document.getElementById('libraryTab').classList.add('hidden');
+      document.getElementById('localTab').classList.add('hidden');
+      const target = document.getElementById(btn.dataset.tab);
+      if (target) target.classList.remove('hidden');
+      if (btn.dataset.tab === 'libraryTab') refreshLibrary();
+    });
+  });
+
   const DEFAULT_REPO = 'Gabriel20gvn/drumscribe-studio';
   const apiBaseInput = document.getElementById('apiBaseUrl');
   const serverStatusText = document.getElementById('serverStatusText');
   const testServerBtn = document.getElementById('testServerBtn');
   const githubTokenInput = document.getElementById('githubTokenInput');
   const githubRepoInput = document.getElementById('githubRepoInput');
+
+  function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  }
 
   function getRepoName() {
     const r = (githubRepoInput.value || DEFAULT_REPO).trim();
@@ -586,7 +599,7 @@
       return false;
     }
     try {
-      const resp = await fetch(apiUrl('/api/status/ping'));
+      const resp = await fetchWithTimeout(apiUrl('/api/status/ping'), {}, 3500);
       if (resp.status === 404 || resp.ok) {
         serverStatusText.innerHTML = '<span class="dot online"></span> Servidor Conectado';
         return true;
@@ -597,12 +610,13 @@
     return false;
   }
 
-  // ==================== INDEXEDDB BIBLIOTECA OFFLINE ====================
   const DB_NAME = 'DrumScribeLibraryDB';
   const STORE_NAME = 'scores';
 
   function openLibraryDB() {
     return new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) return reject(new Error('IndexedDB indisponível'));
+      const timer = setTimeout(() => reject(new Error('Timeout IndexedDB')), 2000);
       const req = indexedDB.open(DB_NAME, 1);
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
@@ -610,49 +624,57 @@
           db.createObjectStore(STORE_NAME, { keyPath: 'id' });
         }
       };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onsuccess = () => { clearTimeout(timer); resolve(req.result); };
+      req.onerror = () => { clearTimeout(timer); reject(req.error); };
     });
   }
 
   async function dbPutScore(record) {
-    const db = await openLibraryDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      tx.objectStore(STORE_NAME).put(record);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
+    try {
+      const db = await openLibraryDB();
+      return await new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(record);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      });
+    } catch (e) { return false; }
   }
 
   async function dbGetAllScores() {
-    const db = await openLibraryDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
-    });
+    try {
+      const db = await openLibraryDB();
+      return await new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      });
+    } catch (e) { return []; }
   }
 
   async function dbGetScore(id) {
-    const db = await openLibraryDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).get(id);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => reject(req.error);
-    });
+    try {
+      const db = await openLibraryDB();
+      return await new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    } catch (e) { return null; }
   }
 
   async function dbDeleteScore(id) {
-    const db = await openLibraryDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      tx.objectStore(STORE_NAME).delete(id);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
+    try {
+      const db = await openLibraryDB();
+      return await new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(id);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      });
+    } catch (e) { return false; }
   }
 
   let mergedLibrary = [];
@@ -679,9 +701,7 @@
       };
       await dbPutScore(record);
       await refreshLibrary();
-    } catch (e) {
-      console.warn('Falha ao salvar cache offline:', e);
-    }
+    } catch (e) {}
   }
 
   function resolveCloudAssetUrl(relPath) {
@@ -695,12 +715,12 @@
     const repo = getRepoName();
     const rawUrl = `https://raw.githubusercontent.com/${repo}/main/library/index.json?t=${Date.now()}`;
     try {
-      const resp = await fetch(rawUrl);
+      const resp = await fetchWithTimeout(rawUrl, {}, 3500);
       if (resp.ok) return await resp.json();
     } catch (e) {}
 
     try {
-      const localRel = await fetch(`./library/index.json?t=${Date.now()}`);
+      const localRel = await fetchWithTimeout(`./library/index.json?t=${Date.now()}`, {}, 2500);
       if (localRel.ok) return await localRel.json();
     } catch (e) {}
 
@@ -708,9 +728,9 @@
   }
 
   async function refreshLibrary() {
-    const localItems = await dbGetAllScores();
     const byId = new Map();
 
+    const localItems = await dbGetAllScores();
     for (const item of localItems) {
       byId.set(item.id, {
         id: item.id,
@@ -745,3 +765,532 @@
           cloudMeta: cItem,
           serverMeta: null,
         });
+      }
+    }
+
+    if (getApiBase() || !window.location.hostname.includes('github.io')) {
+      try {
+        const resp = await fetchWithTimeout(apiUrl('/api/library'), {}, 3000);
+        if (resp.ok) {
+          const data = await resp.json();
+          for (const rItem of (data.items || [])) {
+            const existing = byId.get(rItem.id);
+            if (existing) {
+              existing.hasServer = true;
+              existing.serverMeta = rItem;
+            } else {
+              byId.set(rItem.id, {
+                id: rItem.id,
+                title: rItem.title,
+                bpm: rItem.bpm,
+                measures: rItem.measures,
+                created_at: rItem.created_at || 0,
+                hasLocal: false,
+                hasCloud: false,
+                hasServer: true,
+                cloudMeta: null,
+                serverMeta: rItem,
+              });
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    mergedLibrary = Array.from(byId.values()).sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+    document.getElementById('libraryTabBtn').textContent = `📚 Biblioteca (${mergedLibrary.length})`;
+    renderLibraryList();
+  }
+
+  function renderLibraryList() {
+    const container = document.getElementById('libraryList');
+    const query = document.getElementById('librarySearch').value.trim().toLowerCase();
+    const filtered = mergedLibrary.filter(it => !query || it.title.toLowerCase().includes(query));
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<p style="color:var(--muted); font-size:0.88rem;">Nenhuma partitura na biblioteca ainda. Gere sua primeira música na aba <strong>🎬 Gerar Partitura</strong>!</p>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(item => {
+      const dateStr = item.created_at
+        ? new Date(item.created_at * 1000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+        : '';
+      const badges = [];
+      if (item.hasCloud) badges.push('<span class="badge">☁️ Nuvem (Todos dispositivos)</span>');
+      if (item.hasLocal) badges.push('<span class="badge offline">📱 Salvo Offline</span>');
+      if (!item.hasCloud && item.hasServer) badges.push('<span class="badge">🖥️ Servidor</span>');
+
+      return `
+        <div class="lib-item ${activeLibraryId === item.id ? 'current' : ''}">
+          <div>
+            <div class="lib-title">${escapeHtml(item.title)}</div>
+            <div class="lib-meta">
+              <span>${item.bpm} BPM • ${item.measures} comp.</span>
+              ${dateStr ? `<span>• ${dateStr}</span>` : ''}
+            </div>
+            <div class="lib-meta">${badges.join(' ')}</div>
+          </div>
+          <div class="lib-actions">
+            <button class="btn btn-primary" onclick="openLibraryItem('${item.id}')">▶ Abrir</button>
+            <button class="btn btn-danger" onclick="removeLibraryItem('${item.id}')">🗑️</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+  }
+
+  window.openLibraryItem = async function(id) {
+    stopPlayback();
+    activeLibraryId = id;
+    renderLibraryList();
+
+    const localRec = await dbGetScore(id);
+    if (localRec && localRec.xmlBuffer) {
+      document.getElementById('songTitleDisplay').textContent = localRec.title;
+      document.getElementById('songMetaDisplay').textContent = `• ${localRec.bpm} BPM • ${localRec.measures} compassos`;
+      loadScoreIntoAlphaTab(new Uint8Array(localRec.xmlBuffer));
+
+      resetTracks();
+      if (localRec.drumsBlob) setTrackSource('drums', URL.createObjectURL(localRec.drumsBlob));
+      if (localRec.noDrumsBlob) setTrackSource('no_drums', URL.createObjectURL(localRec.noDrumsBlob));
+      if (localRec.vocalsBlob) setTrackSource('vocals', URL.createObjectURL(localRec.vocalsBlob));
+
+      const xmlBlobUrl = URL.createObjectURL(new Blob([localRec.xmlBuffer], { type: 'application/vnd.recordare.musicxml+xml' }));
+      document.getElementById('downloadLinks').innerHTML = `
+        <a class="btn" href="${xmlBlobUrl}" download="${localRec.title}.musicxml">📄 Baixar MusicXML</a>
+      `;
+      document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    const item = mergedLibrary.find(x => x.id === id);
+    if (!item) return;
+
+    if (item.hasCloud && item.cloudMeta) {
+      const m = item.cloudMeta;
+      const xmlUrl = resolveCloudAssetUrl(m.musicxml);
+      const drumsUrl = resolveCloudAssetUrl(m.audio_mp3 && m.audio_mp3.drums);
+      const noDrumsUrl = resolveCloudAssetUrl(m.audio_mp3 && m.audio_mp3.no_drums);
+      const vocalsUrl = resolveCloudAssetUrl(m.audio_mp3 && m.audio_mp3.vocals);
+
+      document.getElementById('songTitleDisplay').textContent = m.title;
+      document.getElementById('songMetaDisplay').textContent = `• ${m.bpm} BPM • ${m.measures} compassos`;
+      loadScoreIntoAlphaTab(xmlUrl);
+
+      resetTracks();
+      if (drumsUrl) setTrackSource('drums', drumsUrl);
+      if (noDrumsUrl) setTrackSource('no_drums', noDrumsUrl);
+      if (vocalsUrl) setTrackSource('vocals', vocalsUrl);
+
+      document.getElementById('downloadLinks').innerHTML = `
+        <a class="btn" href="${xmlUrl}" download="${m.title}.musicxml">📄 Baixar MusicXML</a>
+      `;
+      document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth' });
+
+      cacheFromUrlsToDB(m, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl);
+      return;
+    }
+
+    if (item.hasServer && item.serverMeta) {
+      const m = item.serverMeta;
+      const xmlUrl = apiUrl(`/api/library/${id}/${m.musicxml}`);
+      const drumsUrl = m.audio_mp3.drums ? apiUrl(`/api/library/${id}/${m.audio_mp3.drums}`) : null;
+      const noDrumsUrl = m.audio_mp3.no_drums ? apiUrl(`/api/library/${id}/${m.audio_mp3.no_drums}`) : null;
+      const vocalsUrl = m.audio_mp3.vocals ? apiUrl(`/api/library/${id}/${m.audio_mp3.vocals}`) : null;
+
+      document.getElementById('songTitleDisplay').textContent = m.title;
+      document.getElementById('songMetaDisplay').textContent = `• ${m.bpm} BPM • ${m.measures} compassos`;
+      loadScoreIntoAlphaTab(xmlUrl);
+
+      resetTracks();
+      if (drumsUrl) setTrackSource('drums', drumsUrl);
+      if (noDrumsUrl) setTrackSource('no_drums', noDrumsUrl);
+      if (vocalsUrl) setTrackSource('vocals', vocalsUrl);
+
+      document.getElementById('downloadLinks').innerHTML = `
+        <a class="btn" href="${xmlUrl}" download>📄 Baixar MusicXML</a>
+        ${m.zip ? `<a class="btn btn-accent" href="${apiUrl(`/api/library/${id}/${m.zip}`)}" download>📦 Baixar Kit WAV + MIDI (.zip)</a>` : ''}
+      `;
+      document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth' });
+
+      cacheFromUrlsToDB(m, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl);
+    }
+  };
+
+  window.removeLibraryItem = async function(id) {
+    if (!confirm('Remover esta partitura da biblioteca?')) return;
+    await dbDeleteScore(id);
+    try {
+      const headers = {};
+      const tok = getGithubToken();
+      if (tok) {
+        headers['X-Github-Token'] = tok;
+        headers['X-Github-Repo'] = getRepoName();
+      }
+      await fetchWithTimeout(apiUrl(`/api/library/${id}`), { method: 'DELETE', headers }, 4000);
+    } catch (e) {}
+    await refreshLibrary();
+  };
+
+  document.getElementById('librarySearch').addEventListener('input', renderLibraryList);
+  document.getElementById('refreshLibraryBtn').addEventListener('click', refreshLibrary);
+
+  githubTokenInput.addEventListener('change', getGithubToken);
+  githubRepoInput.addEventListener('change', getRepoName);
+
+  testServerBtn.addEventListener('click', async () => {
+    await checkServerConnection();
+    await refreshLibrary();
+  });
+  apiBaseInput.addEventListener('change', async () => {
+    await checkServerConnection();
+    await refreshLibrary();
+  });
+
+  let wakeLock = null;
+  const wakeLockBtn = document.getElementById('wakeLockBtn');
+  wakeLockBtn.addEventListener('click', async () => {
+    if (!('wakeLock' in navigator)) return alert('Seu navegador não suporta bloqueio de descanso de tela.');
+    try {
+      if (!wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLockBtn.classList.add('btn-active');
+        wakeLockBtn.textContent = '☀️ Tela Travada';
+        wakeLock.addEventListener('release', () => {
+          wakeLock = null;
+          wakeLockBtn.classList.remove('btn-active');
+          wakeLockBtn.textContent = '☀️ Tela Acesa';
+        });
+      } else {
+        await wakeLock.release();
+      }
+    } catch (err) {}
+  });
+
+  const readingModeBtn = document.getElementById('readingModeBtn');
+  const exitReadingBtn = document.getElementById('exitReadingBtn');
+  function toggleReadingMode() {
+    document.body.classList.toggle('reading-mode');
+    const active = document.body.classList.contains('reading-mode');
+    exitReadingBtn.classList.toggle('hidden', !active);
+    if (alphaApi) alphaApi.render();
+  }
+  readingModeBtn.addEventListener('click', toggleReadingMode);
+  exitReadingBtn.addEventListener('click', toggleReadingMode);
+
+  let alphaApi = null;
+  function loadScoreIntoAlphaTab(urlOrBuffer) {
+    const container = document.getElementById('alphaTabContainer');
+    container.innerHTML = '';
+    if (alphaApi) { alphaApi.destroy(); alphaApi = null; }
+    if (typeof alphaTab === 'undefined') {
+      container.innerHTML = '<p style="padding:20px;color:#b91c1c;">Biblioteca visual AlphaTab ainda carregando. Aguarde 2 segundos e tente abrir novamente.</p>';
+      return;
+    }
+
+    alphaApi = new alphaTab.AlphaTabApi(container, {
+      core: { engine: 'svg', logLevel: 'warning' },
+      display: { layoutMode: alphaTab.LayoutMode.Page, staveProfile: alphaTab.StaveProfile.Score },
+      player: { enablePlayer: false }
+    });
+    alphaApi.load(urlOrBuffer);
+  }
+
+  const tracks = {
+    drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
+    no_drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
+    vocals: { audio: new Audio(), vol: 0.8, mute: false, solo: false, loaded: false }
+  };
+
+  Object.values(tracks).forEach(t => {
+    t.audio.preload = 'auto';
+    t.audio.preservesPitch = true;
+    t.audio.crossOrigin = 'anonymous';
+  });
+
+  function resetTracks() {
+    Object.values(tracks).forEach(t => {
+      t.audio.pause();
+      t.audio.removeAttribute('src');
+      t.loaded = false;
+    });
+  }
+
+  function updateMixerVolumes() {
+    const anySolo = Object.values(tracks).some(t => t.solo);
+    Object.values(tracks).forEach(t => {
+      t.audio.volume = anySolo ? (t.solo ? t.vol : 0) : (t.mute ? 0 : t.vol);
+    });
+  }
+
+  document.querySelectorAll('.channel-strip').forEach(strip => {
+    const name = strip.dataset.track;
+    const slider = strip.querySelector('.vol-slider');
+    const muteBtn = strip.querySelector('[data-action="mute"]');
+    const soloBtn = strip.querySelector('[data-action="solo"]');
+
+    slider.addEventListener('input', () => { tracks[name].vol = parseFloat(slider.value); updateMixerVolumes(); });
+    muteBtn.addEventListener('click', () => {
+      tracks[name].mute = !tracks[name].mute;
+      muteBtn.classList.toggle('active', tracks[name].mute);
+      updateMixerVolumes();
+    });
+    soloBtn.addEventListener('click', () => {
+      tracks[name].solo = !tracks[name].solo;
+      soloBtn.classList.toggle('active', tracks[name].solo);
+      updateMixerVolumes();
+    });
+  });
+
+  function setTrackSource(name, src) {
+    if (!src) return;
+    tracks[name].audio.src = src;
+    tracks[name].loaded = true;
+  }
+
+  function getMasterTrack() {
+    return tracks.no_drums.loaded ? tracks.no_drums.audio :
+           tracks.drums.loaded ? tracks.drums.audio :
+           tracks.vocals.loaded ? tracks.vocals.audio : null;
+  }
+
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const seekSlider = document.getElementById('seekSlider');
+  const speedSlider = document.getElementById('speedSlider');
+  const speedVal = document.getElementById('speedVal');
+  const timeCurrent = document.getElementById('timeCurrent');
+  const timeTotal = document.getElementById('timeTotal');
+
+  function formatTime(sec) {
+    if (!isFinite(sec)) return '00:00';
+    return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+  }
+
+  let isPlaying = false;
+
+  function stopPlayback() {
+    for (const tr of Object.values(tracks)) { if (tr.loaded) { tr.audio.pause(); tr.audio.currentTime = 0; } }
+    isPlaying = false;
+    playPauseBtn.textContent = '▶ Tocar';
+    seekSlider.value = 0;
+    timeCurrent.textContent = '00:00';
+  }
+
+  playPauseBtn.addEventListener('click', async () => {
+    const master = getMasterTrack();
+    if (!master) return alert('Carregue uma música primeiro.');
+
+    if (!isPlaying) {
+      const t = master.currentTime;
+      const rate = parseFloat(speedSlider.value);
+      updateMixerVolumes();
+      for (const tr of Object.values(tracks)) {
+        if (tr.loaded) { tr.audio.currentTime = t; tr.audio.playbackRate = rate; await tr.audio.play(); }
+      }
+      isPlaying = true;
+      playPauseBtn.textContent = '⏸ Pausar';
+    } else {
+      for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.pause(); }
+      isPlaying = false;
+      playPauseBtn.textContent = '▶ Tocar';
+    }
+  });
+
+  stopBtn.addEventListener('click', stopPlayback);
+
+  speedSlider.addEventListener('input', () => {
+    const rate = parseFloat(speedSlider.value);
+    speedVal.textContent = `${Math.round(rate * 100)}%`;
+    for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.playbackRate = rate; }
+  });
+
+  seekSlider.addEventListener('input', () => {
+    const master = getMasterTrack();
+    if (!master || !isFinite(master.duration)) return;
+    const targetTime = (parseFloat(seekSlider.value) / 100) * master.duration;
+    for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.currentTime = targetTime; }
+  });
+
+  setInterval(() => {
+    const master = getMasterTrack();
+    if (!master || !isFinite(master.duration)) return;
+    timeCurrent.textContent = formatTime(master.currentTime);
+    timeTotal.textContent = formatTime(master.duration);
+    seekSlider.value = (master.currentTime / master.duration) * 100;
+
+    if (isPlaying) {
+      for (const tr of Object.values(tracks)) {
+        if (tr.loaded && tr.audio !== master && Math.abs(tr.audio.currentTime - master.currentTime) > 0.08) {
+          tr.audio.currentTime = master.currentTime;
+        }
+      }
+    }
+  }, 250);
+
+  const generateBtn = document.getElementById('generateBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressText = document.getElementById('progressText');
+  const progressPct = document.getElementById('progressPct');
+  const progressFill = document.getElementById('progressFill');
+
+  generateBtn.addEventListener('click', async () => {
+    const url = document.getElementById('ytUrl').value.trim();
+    const mediaInput = document.getElementById('mediaFile');
+    const hasMedia = mediaInput.files.length > 0;
+
+    if (!url && !hasMedia) {
+      return alert('Cole um link ou selecione um arquivo de áudio/vídeo.');
+    }
+
+    if (!getApiBase() && window.location.hostname.includes('github.io')) {
+      return alert('Cole primeiro o Link do Servidor Backend do Colab (ex.: https://xxxx.trycloudflare.com).');
+    }
+
+    const formData = new FormData();
+    formData.append('url', url);
+    formData.append('demucs_model', document.getElementById('demucsModel').value);
+    formData.append('whisper_model', 'small');
+    formData.append('language', document.getElementById('whisperLang').value);
+    formData.append('github_token', getGithubToken());
+    formData.append('github_repo', getRepoName());
+
+    if (hasMedia) formData.append('media_file', mediaInput.files[0]);
+
+    const cookiesInput = document.getElementById('cookiesFile');
+    if (cookiesInput.files.length > 0) formData.append('cookies_file', cookiesInput.files[0]);
+
+    generateBtn.disabled = true;
+    progressWrap.style.display = 'block';
+    progressText.textContent = hasMedia ? 'Enviando áudio para processamento...' : 'Enviando link para processamento...';
+    progressPct.textContent = '5%';
+    progressFill.style.width = '5%';
+
+    try {
+      const resp = await fetch(apiUrl('/api/process'), { method: 'POST', body: formData });
+      if (!resp.ok) throw new Error('Não foi possível conectar ao servidor do Colab. Verifique se a célula está rodando.');
+      const { job_id } = await resp.json();
+
+      const poll = setInterval(async () => {
+        try {
+          const stResp = await fetch(apiUrl(`/api/status/${job_id}`));
+          const st = await stResp.json();
+
+          progressText.textContent = st.step || 'Processando...';
+          progressPct.textContent = `${st.progress || 0}%`;
+          progressFill.style.width = `${st.progress || 0}%`;
+
+          if (st.status === 'completed') {
+            clearInterval(poll);
+            generateBtn.disabled = false;
+            const res = st.result;
+
+            const xmlUrl = apiUrl(`/api/files/${job_id}/${res.musicxml}`);
+            const drumsUrl = res.audio_mp3.drums ? apiUrl(`/api/files/${job_id}/${res.audio_mp3.drums}`) : null;
+            const noDrumsUrl = res.audio_mp3.no_drums ? apiUrl(`/api/files/${job_id}/${res.audio_mp3.no_drums}`) : null;
+            const vocalsUrl = res.audio_mp3.vocals ? apiUrl(`/api/files/${job_id}/${res.audio_mp3.vocals}`) : null;
+
+            document.getElementById('songTitleDisplay').textContent = res.title;
+            document.getElementById('songMetaDisplay').textContent = `• ${res.bpm} BPM • ${res.measures} compassos`;
+
+            loadScoreIntoAlphaTab(xmlUrl);
+            resetTracks();
+            if (drumsUrl) setTrackSource('drums', drumsUrl);
+            if (noDrumsUrl) setTrackSource('no_drums', noDrumsUrl);
+            if (vocalsUrl) setTrackSource('vocals', vocalsUrl);
+
+            document.getElementById('downloadLinks').innerHTML = `
+              <a class="btn" href="${xmlUrl}" download>📄 Baixar MusicXML</a>
+              <a class="btn btn-accent" href="${apiUrl(`/api/files/${job_id}/${res.zip}`)}" download>📦 Baixar Kit WAV + MIDI (.zip)</a>
+            `;
+
+            if (res.cloud_sync_error) {
+              alert('Partitura gerada, mas houve um aviso ao enviar para a nuvem do celular: ' + res.cloud_sync_error);
+            }
+
+            const libMeta = {
+              id: res.library_id || `${Date.now()}`,
+              title: res.title,
+              bpm: res.bpm,
+              measures: res.measures,
+              created_at: Date.now() / 1000,
+            };
+            activeLibraryId = libMeta.id;
+            await cacheFromUrlsToDB(libMeta, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl);
+          } else if (st.status === 'error') {
+            clearInterval(poll);
+            generateBtn.disabled = false;
+            alert('Erro no servidor: ' + st.error);
+          }
+        } catch (pollErr) {}
+      }, 2500);
+    } catch (err) {
+      generateBtn.disabled = false;
+      alert(err.message);
+    }
+  });
+
+  document.getElementById('loadLocalBtn').addEventListener('click', async () => {
+    const xmlFile = document.getElementById('localXml').files[0];
+    const drumsFile = document.getElementById('localDrums').files[0];
+    const playbackFile = document.getElementById('localPlayback').files[0];
+    const vocalsFile = document.getElementById('localVocals').files[0];
+
+    if (!xmlFile) return alert('Selecione pelo menos o arquivo .musicxml da partitura.');
+
+    const buffer = await xmlFile.arrayBuffer();
+    const title = xmlFile.name.replace(/\.[^/.]+$/, '');
+    loadScoreIntoAlphaTab(new Uint8Array(buffer));
+    document.getElementById('songTitleDisplay').textContent = title;
+    document.getElementById('songMetaDisplay').textContent = '• Arquivo Local';
+
+    resetTracks();
+    if (drumsFile) setTrackSource('drums', URL.createObjectURL(drumsFile));
+    if (playbackFile) setTrackSource('no_drums', URL.createObjectURL(playbackFile));
+    if (vocalsFile) setTrackSource('vocals', URL.createObjectURL(vocalsFile));
+
+    const recId = `local_${Date.now()}`;
+    await dbPutScore({
+      id: recId,
+      title,
+      bpm: 120,
+      measures: 0,
+      created_at: Date.now() / 1000,
+      xmlBuffer: buffer,
+      drumsBlob: drumsFile || null,
+      noDrumsBlob: playbackFile || null,
+      vocalsBlob: vocalsFile || null,
+    });
+    activeLibraryId = recId;
+    await refreshLibrary();
+  });
+
+  (function initApp() {
+    const params = new URLSearchParams(window.location.search);
+    const paramApi = params.get('api');
+    if (paramApi) {
+      const clean = paramApi.trim().replace(/\/+$/, '');
+      apiBaseInput.value = clean;
+      localStorage.setItem('drumscribe_api_base', clean);
+    } else {
+      const saved = localStorage.getItem('drumscribe_api_base');
+      if (saved) apiBaseInput.value = saved;
+    }
+
+    const savedToken = localStorage.getItem('drumscribe_github_token');
+    if (savedToken) githubTokenInput.value = savedToken;
+
+    const savedRepo = localStorage.getItem('drumscribe_github_repo');
+    if (savedRepo) githubRepoInput.value = savedRepo;
+
+    checkServerConnection();
+    refreshLibrary();
+  })();
+</script>
+</body>
+</html>

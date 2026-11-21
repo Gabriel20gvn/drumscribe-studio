@@ -18,7 +18,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 os.makedirs(JOBS_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
-app = FastAPI(title="DrumScribe Studio API", version="1.0.0")
+app = FastAPI(title="DrumScribe Studio API", version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,7 +49,9 @@ def run_job_worker(
     demucs_model: str,
     whisper_model: str,
     language: str,
-    cookies_path: Optional[str]
+    cookies_path: Optional[str],
+    uploaded_media_path: Optional[str],
+    uploaded_media_name: Optional[str]
 ):
     job_dir = os.path.join(JOBS_DIR, job_id)
 
@@ -67,6 +69,8 @@ def run_job_worker(
             whisper_model=whisper_model,
             language=language,
             cookies_path=cookies_path,
+            uploaded_media_path=uploaded_media_path,
+            uploaded_media_name=uploaded_media_name,
             progress_cb=update_progress
         )
         JOBS[job_id]["status"] = "completed"
@@ -82,6 +86,8 @@ def run_job_worker(
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
     index_path = os.path.join(STATIC_DIR, "index.html")
+    if not os.path.exists(index_path):
+        index_path = os.path.join(BASE_DIR, "index.html")
     with open(index_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
@@ -89,16 +95,18 @@ async def serve_frontend():
 @app.post("/api/process")
 async def start_processing(
     background_tasks: BackgroundTasks,
-    url: str = Form(...),
+    url: str = Form(""),
     demucs_model: str = Form("htdemucs"),
     whisper_model: str = Form("small"),
     language: str = Form("pt"),
-    cookies_file: Optional[UploadFile] = File(None)
+    cookies_file: Optional[UploadFile] = File(None),
+    media_file: Optional[UploadFile] = File(None)
 ):
     cleanup_old_jobs()
 
-    if not url.strip():
-        raise HTTPException(status_code=400, detail="Informe uma URL válida do YouTube.")
+    has_media = media_file is not None and bool(media_file.filename)
+    if not url.strip() and not has_media:
+        raise HTTPException(status_code=400, detail="Informe um link ou envie um arquivo de áudio/vídeo.")
 
     job_id = uuid.uuid4().hex[:12]
     job_dir = os.path.join(JOBS_DIR, job_id)
@@ -109,6 +117,15 @@ async def start_processing(
         cookies_path = os.path.join(job_dir, "cookies.txt")
         with open(cookies_path, "wb") as f:
             f.write(await cookies_file.read())
+
+    uploaded_media_path = None
+    uploaded_media_name = None
+    if has_media:
+        uploaded_media_name = media_file.filename
+        ext = os.path.splitext(uploaded_media_name)[1] or ".mp3"
+        uploaded_media_path = os.path.join(job_dir, f"uploaded_input{ext}")
+        with open(uploaded_media_path, "wb") as f:
+            f.write(await media_file.read())
 
     JOBS[job_id] = {
         "job_id": job_id,
@@ -127,7 +144,9 @@ async def start_processing(
         demucs_model,
         whisper_model,
         language,
-        cookies_path
+        cookies_path,
+        uploaded_media_path,
+        uploaded_media_name
     )
 
     return {"job_id": job_id}

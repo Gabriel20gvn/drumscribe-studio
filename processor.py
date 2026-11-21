@@ -1,5 +1,6 @@
 import os
 import re
+import glob
 import math
 import shutil
 import zipfile
@@ -48,28 +49,35 @@ def convert_uploaded_to_wav(input_path: str, job_dir: str, original_name: str) -
 def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = None) -> tuple[str, str]:
     raw_template = os.path.join(job_dir, "raw_audio.%(ext)s")
 
-    # Tenta clientes que reduzem bloqueio de IP em servidores na nuvem sem exigir cookies
-    client_profiles = [
-        ["tv", "mweb"],
-        ["android_vr", "web"],
-        ["ios", "android"],
+    drive_cookies = "/content/drive/MyDrive/cookies.txt"
+    effective_cookies = cookies_path if (cookies_path and os.path.exists(cookies_path)) else (
+        drive_cookies if os.path.exists(drive_cookies) else None
+    )
+
+    attempts = [
+        {"clients": None, "format": "bestaudio/best/best*"},
+        {"clients": ["ios", "mweb"], "format": "best/bestaudio/best*"},
+        {"clients": ["android_vr", "tv_embedded"], "format": None},
+        {"clients": ["web_safari", "android"], "format": None},
     ]
 
     last_error = None
     title = "musica_youtube"
 
-    for clients in client_profiles:
-        ydl_opts = {
-            "format": "bestaudio/best",
+    for attempt in attempts:
+        for old_file in glob.glob(os.path.join(job_dir, "raw_audio.*")):
+            try:
+                os.remove(old_file)
+            except OSError:
+                pass
+
+        ydl_opts: Dict[str, Any] = {
             "outtmpl": raw_template,
             "noplaylist": True,
             "quiet": True,
             "no_warnings": True,
-            "extractor_args": {
-                "youtube": {
-                    "player_client": clients
-                }
-            },
+            "nocheckcertificate": True,
+            "geo_bypass": True,
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "wav",
@@ -80,8 +88,19 @@ def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = N
                 "-acodec", "pcm_s16le"
             ],
         }
-        if cookies_path and os.path.exists(cookies_path):
-            ydl_opts["cookiefile"] = cookies_path
+
+        if attempt["format"]:
+            ydl_opts["format"] = attempt["format"]
+
+        if attempt["clients"]:
+            ydl_opts["extractor_args"] = {
+                "youtube": {
+                    "player_client": attempt["clients"]
+                }
+            }
+
+        if effective_cookies:
+            ydl_opts["cookiefile"] = effective_cookies
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -95,8 +114,8 @@ def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = N
             continue
 
     raise RuntimeError(
-        f"O YouTube bloqueou o IP do servidor para este vídeo ({last_error}). "
-        "Solução rápida sem cookies: baixe o MP3/M4A no seu celular e envie no campo 'Ou envie um arquivo de áudio/vídeo'."
+        f"Não foi possível baixar o áudio diretamente deste link ({last_error}). "
+        "Tente atualizar o yt-dlp no Colab (!pip install -U 'yt-dlp[default]') ou usar o link de outro vídeo (ex.: versão Áudio Oficial / Topic) da mesma música."
     )
 
 

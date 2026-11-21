@@ -289,9 +289,17 @@
       background: #ffffff;
       color: #000000;
       border-radius: 10px;
-      padding: 10px;
-      min-height: 360px;
+      padding: 12px;
+      min-height: 420px;
       overflow-x: auto;
+    }
+    .legend-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-bottom: 8px;
     }
 
     body.reading-mode header,
@@ -515,11 +523,20 @@
         <strong id="songTitleDisplay">Partitura de Bateria</strong>
         <span id="songMetaDisplay" style="font-size:0.8rem; color:var(--muted); margin-left:8px;"></span>
       </div>
-      <div style="display:flex; gap:8px; align-items:center;">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button id="zoomOutBtn" class="btn" type="button" title="Diminuir zoom">🔍−</button>
+        <button id="zoomInBtn" class="btn" type="button" title="Aumentar zoom">🔍+</button>
         <label style="margin:0;">Velocidade: <span id="speedVal">100%</span></label>
-        <input type="range" id="speedSlider" min="0.5" max="1.25" step="0.05" value="1.0" style="width:110px;" />
+        <input type="range" id="speedSlider" min="0.5" max="1.25" step="0.05" value="1.0" style="width:100px;" />
         <button id="exitReadingBtn" class="btn hidden">Sair Leitura</button>
       </div>
+    </div>
+    <div class="legend-bar">
+      <span><strong>Legenda:</strong></span>
+      <span>• 1º Espaço: <strong>Bumbo</strong></span>
+      <span>• 3º Espaço: <strong>Caixa</strong></span>
+      <span>• Acima da 5ª linha (✕): <strong>Chimbal</strong></span>
+      <span>• Linha suplementar superior (✕): <strong>Ataque (Crash)</strong></span>
     </div>
     <div id="alphaTabContainer">
       <p style="padding:30px; text-align:center; color:#475569;">
@@ -984,6 +1001,17 @@
   exitReadingBtn.addEventListener('click', toggleReadingMode);
 
   let alphaApi = null;
+  let scoreScale = 1.0;
+
+  document.getElementById('zoomInBtn').addEventListener('click', () => {
+    scoreScale = Math.min(1.6, +(scoreScale + 0.1).toFixed(1));
+    if (alphaApi) { alphaApi.settings.display.scale = scoreScale; alphaApi.updateSettings(); alphaApi.render(); }
+  });
+  document.getElementById('zoomOutBtn').addEventListener('click', () => {
+    scoreScale = Math.max(0.6, +(scoreScale - 0.1).toFixed(1));
+    if (alphaApi) { alphaApi.settings.display.scale = scoreScale; alphaApi.updateSettings(); alphaApi.render(); }
+  });
+
   function loadScoreIntoAlphaTab(urlOrBuffer) {
     const container = document.getElementById('alphaTabContainer');
     container.innerHTML = '';
@@ -994,10 +1022,24 @@
     }
 
     alphaApi = new alphaTab.AlphaTabApi(container, {
-      core: { engine: 'svg', logLevel: 'warning' },
-      display: { layoutMode: alphaTab.LayoutMode.Page, staveProfile: alphaTab.StaveProfile.Score },
+      core: {
+        engine: 'svg',
+        useWorker: false,
+        fontDirectory: 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/font/',
+        logLevel: 'warning'
+      },
+      display: {
+        layoutMode: alphaTab.LayoutMode.Page,
+        staveProfile: alphaTab.StaveProfile.Score,
+        scale: scoreScale
+      },
       player: { enablePlayer: false }
     });
+
+    alphaApi.error.on((err) => {
+      container.innerHTML = `<p style="padding:20px;color:#b91c1c;">Aviso ao desenhar partitura: ${err && err.message ? err.message : err}</p>`;
+    });
+
     alphaApi.load(urlOrBuffer);
   }
 

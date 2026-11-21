@@ -9,6 +9,8 @@ import base64
 import shutil
 import zipfile
 import subprocess
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
 from typing import Callable, Optional, Dict, Any, List
 
 import requests
@@ -18,7 +20,7 @@ import librosa
 from scipy.signal import butter, sosfilt
 import yt_dlp
 import whisper
-from music21 import stream, note, chord, meter, tempo, clef, expressions, metadata
+from music21 import stream, note, chord, meter, tempo, metadata
 
 
 def sanitize_filename(name: str) -> str:
@@ -241,19 +243,135 @@ def _highpass_filter(y: np.ndarray, sr: int, cutoff: float) -> np.ndarray:
 def _detect_band_onsets(y_band: np.ndarray, sr: int, delta: float = 0.12) -> tuple[np.ndarray, np.ndarray]:
     hop_length = 256
     onset_env = librosa.onset.onset_strength(y=y_band, sr=sr, hop_length=hop_length)
-    if np.max(onset_env) > 0:
-        onset_env = onset_env / np.max(onset_env)
+    max_val = float(np.max(onset_env)) if len(onset_env) > 0 else 0.0
+    if max_val > 0:
+        onset_env = onset_env / max_val
     peaks = librosa.onset.onset_detect(
         onset_envelope=onset_env,
         sr=sr,
         hop_length=hop_length,
         backtrack=False,
         delta=delta,
-        wait=int(0.06 * sr / hop_length)
+        wait=max(1, int(0.055 * sr / hop_length))
     )
     times = librosa.frames_to_time(peaks, sr=sr, hop_length=hop_length)
     strengths = onset_env[peaks] if len(peaks) > 0 else np.array([])
     return times, strengths
+
+
+def _build_drum_musicxml(
+    title: str,
+    bpm: int,
+    measures_events: List[List[tuple[int, set]]],
+    lyrics_by_measure: Dict[int, List[str]]
+) -> str:
+    score = ET.Element("score-partwise", version="3.1")
+    work = ET.SubElement(score, "work")
+    ET.SubElement(work, "work-title").text = title
+
+    identification = ET.SubElement(score, "identification")
+    creator = ET.SubElement(identification, "creator", type="composer")
+    creator.text = "DrumScribe AI (Demucs + Whisper)"
+
+    part_list = ET.SubElement(score, "part-list")
+    score_part = ET.SubElement(part_list, "score-part", id="P1")
+    ET.SubElement(score_part, "part-name").text = "Bateria"
+
+    instruments = [
+        ("P1-I36", "Bass Drum 1", 36),
+        ("P1-I39", "Acoustic Snare", 38),
+        ("P1-I43", "Closed Hi-Hat", 42),
+        ("P1-I48", "Low-Mid Tom", 47),
+        ("P1-I50", "Crash Cymbal 1", 49),
+    ]
+    for inst_id, inst_name, midi_num in instruments:
+        si = ET.SubElement(score_part, "score-instrument", id=inst_id)
+        ET.SubElement(si, "instrument-name").text = inst_name
+        mi = ET.SubElement(score_part, "midi-instrument", id=inst_id)
+        ET.SubElement(mi, "midi-channel").text = "10"
+        ET.SubElement(mi, "midi-program").text = "1"
+        ET.SubElement(mi, "midi-unpitched").text = str(midi_num)
+
+    part = ET.SubElement(score, "part", id="P1")
+
+    piece_spec = {
+        "kick":  ("F", "4", "normal", "P1-I36"),
+        "snare": ("C", "5", "normal", "P1-I39"),
+        "tom":   ("E", "5", "normal", "P1-I48"),
+        "hihat": ("G", "5", "x",      "P1-I43"),
+        "crash": ("A", "5", "x",      "P1-I50"),
+    }
+
+    dur_type_map = {
+        16: ("whole", None),
+        12: ("half", "dot"),
+        8:  ("half", None),
+        6:  ("quarter", "dot"),
+        4:  ("quarter", None),
+        3:  ("eighth", "dot"),
+        2:  ("eighth", None),
+        1:  ("16th", None),
+    }
+
+    for m_idx, events in enumerate(measures_events):
+        measure = ET.SubElement(part, "measure", number=str(m_idx + 1))
+        if m_idx == 0:
+            attrs = ET.SubElement(measure, "attributes")
+            ET.SubElement(attrs, "divisions").text = "4"
+            time_el = ET.SubElement(attrs, "time")
+            ET.SubElement(time_el, "beats").text = "4"
+            ET.SubElement(time_el, "beat-type").text = "4"
+            clef_el = ET.SubElement(attrs, "clef")
+            ET.SubElement(clef_el, "sign").text = "percussion"
+            ET.SubElement(clef_el, "line").text = "2"
+
+            direction = ET.SubElement(measure, "direction", placement="above")
+            dir_type = ET.SubElement(direction, "direction-type")
+            metronome = ET.SubElement(dir_type, "metronome")
+            ET.SubElement(metronome, "beat-unit").text = "quarter"
+            ET.SubElement(metronome, "per-minute").text = str(bpm)
+            ET.SubElement(direction, "sound", tempo=str(bpm))
+
+        if m_idx in lyrics_by_measure and lyrics_by_measure[m_idx]:
+            frase = " ".join(lyrics_by_measure[m_idx])
+            direction = ET.SubElement(measure, "direction", placement="above")
+            dir_type = ET.SubElement(direction, "direction-type")
+            words = ET.SubElement(dir_type, "words", **{"font-style": "italic", "font-size": "9"})
+            words.text = frase
+
+        for dur_steps, hits in events:
+            note_type, dot_flag = dur_type_map.get(dur_steps, ("16th", None))
+            if not hits:
+                n_el = ET.SubElement(measure, "note")
+                ET.SubElement(n_el, "rest")
+                ET.SubElement(n_el, "duration").text = str(dur_steps)
+                ET.SubElement(n_el, "voice").text = "1"
+                ET.SubElement(n_el, "type").text = note_type
+                if dot_flag:
+                    ET.SubElement(n_el, "dot")
+            else:
+                ordered = [p for p in ["kick", "snare", "tom", "hihat", "crash"] if p in hits]
+                for idx_h, p in enumerate(ordered):
+                    step, octave, nhead, inst_id = piece_spec[p]
+                    n_el = ET.SubElement(measure, "note")
+                    if idx_h > 0:
+                        ET.SubElement(n_el, "chord")
+                    unp = ET.SubElement(n_el, "unpitched")
+                    ET.SubElement(unp, "display-step").text = step
+                    ET.SubElement(unp, "display-octave").text = octave
+                    ET.SubElement(n_el, "duration").text = str(dur_steps)
+                    ET.SubElement(n_el, "instrument", id=inst_id)
+                    ET.SubElement(n_el, "voice").text = "1"
+                    ET.SubElement(n_el, "type").text = note_type
+                    if dot_flag:
+                        ET.SubElement(n_el, "dot")
+                    ET.SubElement(n_el, "stem").text = "up"
+                    if nhead != "normal":
+                        ET.SubElement(n_el, "notehead").text = nhead
+
+    rough = ET.tostring(score, encoding="utf-8")
+    parsed = minidom.parseString(rough)
+    return parsed.toprettyxml(indent="  ", encoding="utf-8").decode("utf-8")
 
 
 def transcribe_drums_and_lyrics(
@@ -271,40 +389,60 @@ def transcribe_drums_and_lyrics(
     y, sr = librosa.load(drums_wav, sr=22050, mono=True)
     duration_sec = librosa.get_duration(y=y, sr=sr)
 
-    tempo_est, _ = librosa.beat.beat_track(y=y, sr=sr)
+    tempo_est, beat_frames = librosa.beat.beat_track(y=y, sr=sr, start_bpm=128.0)
     bpm = float(np.atleast_1d(tempo_est)[0])
-    if bpm < 55 or bpm > 210 or math.isnan(bpm):
+    if bpm < 60 or bpm > 210 or math.isnan(bpm):
         bpm = 120.0
     bpm = round(bpm)
 
     sec_per_beat = 60.0 / bpm
     sec_per_16th = sec_per_beat / 4.0
     sec_per_measure = sec_per_beat * 4.0
-    total_measures = max(1, int(math.ceil(duration_sec / sec_per_measure)))
-    total_steps = total_measures * 16
 
     y_kick = _bandpass_filter(y, sr, 40.0, 130.0)
     y_snare = _bandpass_filter(y, sr, 180.0, 2400.0)
-    y_cymbal = _highpass_filter(y, sr, 6000.0)
+    y_cymbal = _highpass_filter(y, sr, 5500.0)
 
-    kick_times, _ = _detect_band_onsets(y_kick, sr, delta=0.14)
-    snare_times, _ = _detect_band_onsets(y_snare, sr, delta=0.15)
-    cymbal_times, cymbal_strengths = _detect_band_onsets(y_cymbal, sr, delta=0.10)
+    kick_times, _ = _detect_band_onsets(y_kick, sr, delta=0.13)
+    snare_times, _ = _detect_band_onsets(y_snare, sr, delta=0.14)
+    cymbal_times, cymbal_strengths = _detect_band_onsets(y_cymbal, sr, delta=0.09)
+
+    all_onsets = np.concatenate([kick_times, snare_times, cymbal_times]) if (
+        len(kick_times) + len(snare_times) + len(cymbal_times) > 0
+    ) else np.array([0.0])
+
+    first_hit = float(np.min(all_onsets))
+    if len(beat_frames) > 0:
+        beat_times = librosa.frames_to_time(beat_frames, sr=sr)
+        valid_beats = beat_times[beat_times >= max(0.0, first_hit - 0.15)]
+        grid_origin = float(valid_beats[0]) if len(valid_beats) > 0 else first_hit
+    else:
+        grid_origin = first_hit
+
+    effective_duration = max(sec_per_measure, duration_sec - grid_origin)
+    total_measures = max(1, int(math.ceil(effective_duration / sec_per_measure)))
+    total_steps = total_measures * 16
 
     grid: Dict[int, set] = {}
 
     for t in kick_times:
-        step = int(round(t / sec_per_16th))
+        if t < grid_origin - 0.05:
+            continue
+        step = int(round((t - grid_origin) / sec_per_16th))
         if 0 <= step < total_steps:
             grid.setdefault(step, set()).add("kick")
 
     for t in snare_times:
-        step = int(round(t / sec_per_16th))
+        if t < grid_origin - 0.05:
+            continue
+        step = int(round((t - grid_origin) / sec_per_16th))
         if 0 <= step < total_steps:
             grid.setdefault(step, set()).add("snare")
 
     for t, strength in zip(cymbal_times, cymbal_strengths):
-        step = int(round(t / sec_per_16th))
+        if t < grid_origin - 0.05:
+            continue
+        step = int(round((t - grid_origin) / sec_per_16th))
         if 0 <= step < total_steps:
             if strength > 0.72 and (step % 16 in (0, 8)):
                 grid.setdefault(step, set()).add("crash")
@@ -329,51 +467,35 @@ def transcribe_drums_and_lyrics(
                     w_start = float(w.get("start", 0.0))
                     w_text = w.get("word", "").strip()
                     if w_text:
-                        m_idx = int(w_start // sec_per_measure)
+                        m_idx = max(0, int((w_start - grid_origin) // sec_per_measure))
                         lyrics_by_measure.setdefault(m_idx, []).append(w_text)
             else:
                 s_start = float(seg.get("start", 0.0))
                 s_text = seg.get("text", "").strip()
                 if s_text:
-                    m_idx = int(s_start // sec_per_measure)
+                    m_idx = max(0, int((s_start - grid_origin) // sec_per_measure))
                     lyrics_by_measure.setdefault(m_idx, []).append(s_text)
 
     if progress_cb:
-        progress_cb(86, "Montando partitura MusicXML com clave de percussão e letras...")
+        progress_cb(86, "Montando partitura MusicXML 3.1 de bateria com letras...")
 
-    score = stream.Score()
-    score.insert(0, metadata.Metadata())
-    score.metadata.title = title
-    score.metadata.composer = "DrumScribe AI (Demucs + Whisper)"
-
-    part = stream.Part()
-    part.id = "Drums"
-    part.partName = "Bateria"
-
-    pitch_map = {
-        "kick": ("F4", "normal"),
-        "snare": ("C5", "normal"),
-        "hihat": ("G5", "x"),
-        "crash": ("A5", "x"),
-    }
+    measures_events: List[List[tuple[int, set]]] = []
+    midi_score = stream.Score()
+    midi_score.insert(0, metadata.Metadata())
+    midi_score.metadata.title = title
+    midi_part = stream.Part()
+    midi_pitch_map = {"kick": "C2", "snare": "D2", "hihat": "F#2", "crash": "C#3"}
 
     for m_idx in range(total_measures):
-        m = stream.Measure(number=m_idx + 1)
+        m_midi = stream.Measure(number=m_idx + 1)
         if m_idx == 0:
-            m.insert(0.0, clef.PercussionClef())
-            m.insert(0.0, meter.TimeSignature("4/4"))
-            m.insert(0.0, tempo.MetronomeMark(number=bpm))
-
-        if m_idx in lyrics_by_measure:
-            frase = " ".join(lyrics_by_measure[m_idx])
-            txt_exp = expressions.TextExpression(frase)
-            txt_exp.placement = "above"
-            txt_exp.style.fontSize = 9.5
-            txt_exp.style.fontStyle = "italic"
-            m.insert(0.0, txt_exp)
+            m_midi.insert(0.0, meter.TimeSignature("4/4"))
+            m_midi.insert(0.0, tempo.MetronomeMark(number=bpm))
 
         base_step = m_idx * 16
         step_offset = 0
+        m_events: List[tuple[int, set]] = []
+
         while step_offset < 16:
             abs_step = base_step + step_offset
             hits = grid.get(abs_step, set())
@@ -382,46 +504,40 @@ def transcribe_drums_and_lyrics(
             while (step_offset + span) < 16 and not grid.get(base_step + step_offset + span):
                 span += 1
 
-            if span >= 4 and (step_offset % 4 == 0):
+            if span >= 8 and (step_offset % 8 == 0):
+                dur_steps = 8
+            elif span >= 4 and (step_offset % 4 == 0):
                 dur_steps = 4
             elif span >= 2 and (step_offset % 2 == 0):
                 dur_steps = 2
             else:
                 dur_steps = 1
 
-            quarter_len = dur_steps * 0.25
+            m_events.append((dur_steps, hits))
 
+            quarter_len = dur_steps * 0.25
             if not hits:
-                m.append(note.Rest(quarterLength=quarter_len))
+                m_midi.append(note.Rest(quarterLength=quarter_len))
             elif len(hits) == 1:
                 piece = next(iter(hits))
-                p_name, n_head = pitch_map[piece]
-                n = note.Note(p_name, quarterLength=quarter_len)
-                if n_head != "normal":
-                    n.notehead = n_head
-                m.append(n)
+                m_midi.append(note.Note(midi_pitch_map[piece], quarterLength=quarter_len))
             else:
-                ordered_pieces = [p for p in ["kick", "snare", "hihat", "crash"] if p in hits]
-                chord_notes = []
-                for p in ordered_pieces:
-                    p_name, n_head = pitch_map[p]
-                    cn = note.Note(p_name, quarterLength=quarter_len)
-                    if n_head != "normal":
-                        cn.notehead = n_head
-                    chord_notes.append(cn)
-                c = chord.Chord(chord_notes, quarterLength=quarter_len)
-                m.append(c)
+                m_midi.append(chord.Chord([midi_pitch_map[p] for p in hits], quarterLength=quarter_len))
 
             step_offset += dur_steps
 
-        part.append(m)
+        measures_events.append(m_events)
+        midi_part.append(m_midi)
 
-    score.append(part)
+    midi_score.append(midi_part)
 
+    xml_content = _build_drum_musicxml(title, bpm, measures_events, lyrics_by_measure)
     xml_path = os.path.join(job_dir, "partitura_bateria.musicxml")
+    with open(xml_path, "w", encoding="utf-8") as f:
+        f.write(xml_content)
+
     mid_path = os.path.join(job_dir, "partitura_bateria.mid")
-    score.write("musicxml", fp=xml_path)
-    score.write("midi", fp=mid_path)
+    midi_score.write("midi", fp=mid_path)
 
     return {
         "bpm": bpm,

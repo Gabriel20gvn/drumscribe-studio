@@ -263,11 +263,11 @@
 <div class="container">
   <div class="setup-section">
     <div class="tabs">
-      <button class="tab-btn active" data-tab="youtubeTab">🎬 Gerar do YouTube (GPU Colab)</button>
-      <button class="tab-btn" data-tab="localTab">📱 Abrir do Celular / Google Drive</button>
+      <button class="tab-btn active" data-tab="youtubeTab">🎬 Gerar Partitura (Link ou Áudio)</button>
+      <button class="tab-btn" data-tab="localTab">📱 Abrir Partitura Pronta (.musicxml)</button>
     </div>
 
-    <!-- ABA 1: YOUTUBE + BACKEND COLAB -->
+    <!-- ABA 1: YOUTUBE OU UPLOAD DIRETO + BACKEND COLAB -->
     <div id="youtubeTab" class="card">
       <div class="server-bar">
         <div style="flex:1; min-width:220px;">
@@ -284,7 +284,7 @@
 
       <div class="grid-form">
         <div>
-          <label for="ytUrl">Link da Música no YouTube</label>
+          <label for="ytUrl">Link da Música (YouTube, SoundCloud, etc.)</label>
           <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." />
         </div>
         <div>
@@ -306,8 +306,12 @@
       </div>
 
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-top:12px;">
-        <div style="flex:1; min-width:200px;">
-          <label for="cookiesFile">cookies.txt (Opcional — caso o YouTube peça login)</label>
+        <div style="flex:1; min-width:220px;">
+          <label for="mediaFile">Ou envie um arquivo de áudio/vídeo do celular (sem precisar de cookies)</label>
+          <input type="file" id="mediaFile" accept="audio/*,video/*" />
+        </div>
+        <div style="flex:1; min-width:180px;">
+          <label for="cookiesFile">cookies.txt (Opcional)</label>
           <input type="file" id="cookiesFile" accept=".txt" />
         </div>
         <button id="generateBtn" class="btn btn-primary" style="padding:10px 18px;">
@@ -326,10 +330,10 @@
       </div>
     </div>
 
-    <!-- ABA 2: ABRIR ARQUIVOS DO DRIVE / CELULAR -->
+    <!-- ABA 2: ABRIR ARQUIVOS PRONTOS DO DRIVE / CELULAR -->
     <div id="localTab" class="card hidden">
       <p style="font-size:0.85rem; color:var(--muted); margin-bottom:10px;">
-        Selecione os arquivos salvos no seu <strong>Google Drive</strong> ou memória do celular:
+        Selecione uma partitura <strong>.musicxml</strong> já gerada anteriormente e os áudios salvos no seu celular ou Google Drive:
       </p>
       <div class="grid-form">
         <div>
@@ -415,7 +419,7 @@
     </div>
     <div id="alphaTabContainer">
       <p style="padding:30px; text-align:center; color:#475569;">
-        Inicie o servidor no Google Colab para conectar o backend acima ou carregue um arquivo <strong>.musicxml</strong> do seu Google Drive.
+        Cole um link acima ou envie qualquer arquivo de áudio/vídeo do celular para gerar a partitura de bateria com a letra em cima de cada compasso.
       </p>
     </div>
   </div>
@@ -435,7 +439,6 @@
 </div>
 
 <script>
-  // --- 0. Configuração Dinâmica do Backend (Colab / Tunnel) ---
   const apiBaseInput = document.getElementById('apiBaseUrl');
   const serverStatusText = document.getElementById('serverStatusText');
   const testServerBtn = document.getElementById('testServerBtn');
@@ -486,7 +489,6 @@
   testServerBtn.addEventListener('click', checkServerConnection);
   apiBaseInput.addEventListener('change', checkServerConnection);
 
-  // --- 1. Alternância de Abas ---
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -497,7 +499,6 @@
     });
   });
 
-  // --- 2. Screen Wake Lock ---
   let wakeLock = null;
   const wakeLockBtn = document.getElementById('wakeLockBtn');
   wakeLockBtn.addEventListener('click', async () => {
@@ -518,7 +519,6 @@
     } catch (err) { console.warn(err); }
   });
 
-  // --- 3. Modo Leitura ---
   const readingModeBtn = document.getElementById('readingModeBtn');
   const exitReadingBtn = document.getElementById('exitReadingBtn');
   function toggleReadingMode() {
@@ -530,7 +530,6 @@
   readingModeBtn.addEventListener('click', toggleReadingMode);
   exitReadingBtn.addEventListener('click', toggleReadingMode);
 
-  // --- 4. AlphaTab ---
   let alphaApi = null;
   function loadScoreIntoAlphaTab(urlOrBuffer) {
     const container = document.getElementById('alphaTabContainer');
@@ -545,7 +544,6 @@
     alphaApi.load(urlOrBuffer);
   }
 
-  // --- 5. Mixer Multifaixas ---
   const tracks = {
     drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
     no_drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
@@ -668,7 +666,6 @@
     }
   }, 250);
 
-  // --- 6. Integração com Backend (YouTube) ---
   const generateBtn = document.getElementById('generateBtn');
   const progressWrap = document.getElementById('progressWrap');
   const progressText = document.getElementById('progressText');
@@ -677,7 +674,12 @@
 
   generateBtn.addEventListener('click', async () => {
     const url = document.getElementById('ytUrl').value.trim();
-    if (!url) return alert('Cole o link de um vídeo do YouTube.');
+    const mediaInput = document.getElementById('mediaFile');
+    const hasMedia = mediaInput.files.length > 0;
+
+    if (!url && !hasMedia) {
+      return alert('Cole um link ou selecione um arquivo de áudio/vídeo do seu celular.');
+    }
 
     if (!getApiBase() && window.location.hostname.includes('github.io')) {
       return alert('Cole primeiro o Link do Servidor Backend gerado no Google Colab (ex.: https://xxxx.trycloudflare.com).');
@@ -689,12 +691,14 @@
     formData.append('whisper_model', 'small');
     formData.append('language', document.getElementById('whisperLang').value);
 
+    if (hasMedia) formData.append('media_file', mediaInput.files[0]);
+
     const cookiesInput = document.getElementById('cookiesFile');
     if (cookiesInput.files.length > 0) formData.append('cookies_file', cookiesInput.files[0]);
 
     generateBtn.disabled = true;
     progressWrap.style.display = 'block';
-    progressText.textContent = 'Enviando tarefa para o servidor GPU...';
+    progressText.textContent = hasMedia ? 'Enviando áudio para o servidor GPU...' : 'Enviando link para o servidor GPU...';
     progressPct.textContent = '5%';
     progressFill.style.width = '5%';
 
@@ -741,7 +745,6 @@
     }
   });
 
-  // --- 7. Modo Local / Google Drive ---
   document.getElementById('loadLocalBtn').addEventListener('click', async () => {
     const xmlFile = document.getElementById('localXml').files[0];
     const drumsFile = document.getElementById('localDrums').files[0];

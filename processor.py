@@ -46,6 +46,44 @@ def convert_uploaded_to_wav(input_path: str, job_dir: str, original_name: str) -
     return wav_path, sanitize_filename(base_title)
 
 
+def _download_with_pytubefix(url: str, job_dir: str) -> tuple[str, str]:
+    from pytubefix import YouTube
+
+    wav_path = os.path.join(job_dir, "raw_audio.wav")
+    last_err = None
+
+    for client_name in ["ANDROID_VR", "IOS", "TV", "MWEB", "WEB"]:
+        try:
+            yt = YouTube(url, client=client_name)
+            title = sanitize_filename(yt.title or "musica_youtube")
+            audio_stream = (
+                yt.streams.filter(only_audio=True).order_by("abr").desc().first()
+                or yt.streams.order_by("resolution").asc().first()
+            )
+            if not audio_stream:
+                continue
+
+            temp_media = audio_stream.download(output_path=job_dir, filename="raw_ptf_media")
+            cmd = [
+                "ffmpeg", "-y", "-loglevel", "error",
+                "-i", temp_media,
+                "-ar", "44100",
+                "-ac", "2",
+                "-acodec", "pcm_s16le",
+                wav_path
+            ]
+            subprocess.run(cmd, check=True)
+            if os.path.exists(temp_media):
+                os.remove(temp_media)
+            if os.path.exists(wav_path):
+                return wav_path, title
+        except Exception as exc:
+            last_err = exc
+            continue
+
+    raise RuntimeError(f"Fallback pytubefix falhou: {last_err}")
+
+
 def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = None) -> tuple[str, str]:
     raw_template = os.path.join(job_dir, "raw_audio.%(ext)s")
 
@@ -55,10 +93,10 @@ def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = N
     )
 
     attempts = [
-        {"clients": None, "format": "bestaudio/best/best*"},
-        {"clients": ["ios", "mweb"], "format": "best/bestaudio/best*"},
-        {"clients": ["android_vr", "tv_embedded"], "format": None},
-        {"clients": ["web_safari", "android"], "format": None},
+        {"clients": None, "format": "bestaudio/best"},
+        {"clients": ["android_vr", "tv"], "format": "bestaudio/best"},
+        {"clients": ["ios", "mweb"], "format": "bestaudio/best"},
+        {"clients": ["web_safari", "web"], "format": "best/bestaudio"},
     ]
 
     last_error = None
@@ -78,6 +116,7 @@ def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = N
             "no_warnings": True,
             "nocheckcertificate": True,
             "geo_bypass": True,
+            "remote_components": ["ejs:github"],
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "wav",
@@ -113,10 +152,13 @@ def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = N
             last_error = exc
             continue
 
-    raise RuntimeError(
-        f"Não foi possível baixar o áudio diretamente deste link ({last_error}). "
-        "Tente atualizar o yt-dlp no Colab (!pip install -U 'yt-dlp[default]') ou usar o link de outro vídeo (ex.: versão Áudio Oficial / Topic) da mesma música."
-    )
+    try:
+        return _download_with_pytubefix(url, job_dir)
+    except Exception as ptf_exc:
+        raise RuntimeError(
+            f"Não foi possível extrair o áudio deste link no servidor Colab. "
+            f"(yt-dlp: {last_error} | pytubefix: {ptf_exc})"
+        )
 
 
 def separate_with_demucs(wav_path: str, job_dir: str, model: str = "htdemucs") -> Dict[str, str]:

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DrumScribe Studio — Partituras de Bateria &amp; Stems</title>
+  <script src="https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      padding-bottom: 120px;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .brand {
+      font-weight: 700;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.15s;
+    }
+    .btn:hover { filter: brightness(1.1); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #0f172a; border-color: var(--primary); }
+    .btn-accent { background: var(--accent); color: #052e16; border-color: var(--accent); }
+    .btn-active { background: var(--warn); color: #0f172a; border-color: var(--warn); }
+
+    .container {
+      max-width: 1100px;
+      margin: 16px auto;
+      padding: 0 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .tab-btn.active {
+      background: var(--surface-2);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .grid-form {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 700px) {
+      .grid-form { grid-template-columns: 2fr 1fr 1fr; }
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    input[type="text"], select, input[type="file"] {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 10px;
+      font-size: 0.9rem;
+    }
+
+    .progress-wrap {
+      margin-top: 14px;
+      display: none;
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: var(--bg);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 6px 0;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width 0.4s ease;
+    }
+
+    /* Mixer Multifaixas */
+    .mixer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .channel-strip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .channel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .ms-btns { display: flex; gap: 4px; }
+    .ms-btn {
+      width: 26px; height: 24px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .ms-btn.mute.active { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .ms-btn.solo.active { background: var(--warn); color: #000; border-color: var(--warn); }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    /* Área da Partitura AlphaTab */
+    .score-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    #alphaTabContainer {
+      background: #ffffff;
+      color: #000000;
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 360px;
+      overflow-x: auto;
+    }
+
+    body.reading-mode header,
+    body.reading-mode .setup-section {
+      display: none !important;
+    }
+    body.reading-mode .container {
+      max-width: 100%;
+      margin: 0;
+      padding: 4px;
+    }
+
+    /* Barra Fixa de Transporte (Player) */
+    .transport-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 50;
+    }
+    .transport-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .timeline-box {
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">🥁 DrumScribe Studio</div>
+  <div class="header-actions">
+    <button id="wakeLockBtn" class="btn" title="Impede a tela do celular de apagar">☀️ Tela Acesa</button>
+    <button id="readingModeBtn" class="btn">📖 Modo Leitura</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="setup-section">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="youtubeTab">🎬 Gerar do YouTube (Backend)</button>
+      <button class="tab-btn" data-tab="localTab">📱 Abrir do Celular / Google Drive</button>
+    </div>
+
+    <!-- ABA 1: YOUTUBE + BACKEND -->
+    <div id="youtubeTab" class="card">
+      <div class="grid-form">
+        <div>
+          <label for="ytUrl">Link da Música no YouTube</label>
+          <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." />
+        </div>
+        <div>
+          <label for="demucsModel">Separação (Demucs)</label>
+          <select id="demucsModel">
+            <option value="htdemucs" selected>htdemucs (Rápido)</option>
+            <option value="htdemucs_ft">htdemucs_ft (Alta Precisão)</option>
+          </select>
+        </div>
+        <div>
+          <label for="whisperLang">Idioma da Letra (Whisper)</label>
+          <select id="whisperLang">
+            <option value="pt" selected>Português</option>
+            <option value="en">Inglês</option>
+            <option value="es">Espanhol</option>
+            <option value="auto">Detectar Automaticamente</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-top:12px;">
+        <div style="flex:1; min-width:200px;">
+          <label for="cookiesFile">cookies.txt (Opcional — caso o YouTube peça login)</label>
+          <input type="file" id="cookiesFile" accept=".txt" />
+        </div>
+        <button id="generateBtn" class="btn btn-primary" style="padding:10px 18px;">
+          ⚡ Gerar Partitura + Stems
+        </button>
+      </div>
+
+      <div id="progressWrap" class="progress-wrap">
+        <div style="display:flex; justify-content:space-between; font-size:0.83rem;">
+          <span id="progressText">Iniciando...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressFill" class="progress-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 2: ABRIR ARQUIVOS DO DRIVE / CELULAR (GERADOS NO COLAB) -->
+    <div id="localTab" class="card hidden">
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:10px;">
+        Selecione os arquivos salvos no seu <strong>Google Drive</strong> ou memória do celular (gerados pelo Google Colab ou baixados anteriormente):
+      </p>
+      <div class="grid-form">
+        <div>
+          <label for="localXml">1. Partitura (.musicxml ou .xml)</label>
+          <input type="file" id="localXml" accept=".musicxml,.xml,.mid,.gp,.gp5,.gpx" />
+        </div>
+        <div>
+          <label for="localDrums">2. Faixa Bateria (drums.wav / .mp3)</label>
+          <input type="file" id="localDrums" accept="audio/*" />
+        </div>
+        <div>
+          <label for="localPlayback">3. Playback sem Bateria (.wav / .mp3)</label>
+          <input type="file" id="localPlayback" accept="audio/*" />
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px;">
+          <label for="localVocals">4. Faixa Voz (Opcional — vocals.wav / .mp3)</label>
+          <input type="file" id="localVocals" accept="audio/*" />
+        </div>
+        <button id="loadLocalBtn" class="btn btn-accent" style="padding:10px 18px;">
+          📂 Carregar no Estúdio
+        </button>
+      </div>
+    </div>
+
+    <!-- MIXER DE FAIXAS -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <strong style="font-size:0.95rem;">🎛️ Mixer de Estudo (Stems Sincronizados)</strong>
+        <div id="downloadLinks" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+      </div>
+
+      <div class="mixer-grid">
+        <div class="channel-strip" data-track="drums">
+          <div class="channel-header">
+            <span>🥁 Bateria</span>
+            <div class="ms-btns">
+              <button class="ms-btn mute" data-action="mute">M</button>
+              <button class="ms-btn solo" data-action="solo">S</button>
+            </div>
+          </div>
+          <input type="range" min="0" max="1" step="0.02" value="1" class="vol-slider" />
+        </div>
+
+        <div class="channel-strip" data-track="no_drums">
+          <div class="channel-header">
+            <span>🎸 Playback (Sem Bateria)</span>
+            <div class="ms-btns">
+              <button class="ms-btn mute" data-action="mute">M</button>
+              <button class="ms-btn solo" data-action="solo">S</button>
+            </div>
+          </div>
+          <input type="range" min="0" max="1" step="0.02" value="1" class="vol-slider" />
+        </div>
+
+        <div class="channel-strip" data-track="vocals">
+          <div class="channel-header">
+            <span>🎤 Voz Guia</span>
+            <div class="ms-btns">
+              <button class="ms-btn mute" data-action="mute">M</button>
+              <button class="ms-btn solo" data-action="solo">S</button>
+            </div>
+          </div>
+          <input type="range" min="0" max="1" step="0.02" value="0.8" class="vol-slider" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTITURA INTERATIVA -->
+  <div class="card">
+    <div class="score-toolbar">
+      <div>
+        <strong id="songTitleDisplay">Partitura de Bateria</strong>
+        <span id="songMetaDisplay" style="font-size:0.8rem; color:var(--muted); margin-left:8px;"></span>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <label style="margin:0;">Velocidade: <span id="speedVal">100%</span></label>
+        <input type="range" id="speedSlider" min="0.5" max="1.25" step="0.05" value="1.0" style="width:110px;" />
+        <button id="exitReadingBtn" class="btn hidden">Sair Leitura</button>
+      </div>
+    </div>
+    <div id="alphaTabContainer">
+      <p style="padding:30px; text-align:center; color:#475569;">
+        Cole um link do YouTube acima ou carregue um arquivo <strong>.musicxml</strong> do seu Google Drive para visualizar a partitura de bateria com a letra em cima de cada compasso.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- BARRA DE TRANSPORTE -->
+<div class="transport-bar">
+  <div class="transport-controls">
+    <button id="playPauseBtn" class="btn btn-primary">▶ Tocar</button>
+    <button id="stopBtn" class="btn">⏹ Parar</button>
+  </div>
+  <div class="timeline-box">
+    <span id="timeCurrent">00:00</span>
+    <input type="range" id="seekSlider" min="0" max="100" step="0.1" value="0" />
+    <span id="timeTotal">00:00</span>
+  </div>
+</div>
+
+<script>
+  // --- 1. Alternância de Abas ---
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('youtubeTab').classList.add('hidden');
+      document.getElementById('localTab').classList.add('hidden');
+      document.getElementById(btn.dataset.tab).classList.remove('hidden');
+    });
+  });
+
+  // --- 2. Screen Wake Lock (Manter tela acesa no celular) ---
+  let wakeLock = null;
+  const wakeLockBtn = document.getElementById('wakeLockBtn');
+  wakeLockBtn.addEventListener('click', async () => {
+    if (!('wakeLock' in navigator)) {
+      alert('Seu navegador não suporta bloqueio de descanso de tela.');
+      return;
+    }
+    try {
+      if (!wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLockBtn.classList.add('btn-active');
+        wakeLockBtn.textContent = '☀️ Tela Travada';
+        wakeLock.addEventListener('release', () => {
+          wakeLock = null;
+          wakeLockBtn.classList.remove('btn-active');
+          wakeLockBtn.textContent = '☀️ Tela Acesa';
+        });
+      } else {
+        await wakeLock.release();
+      }
+    } catch (err) {
+      console.warn('WakeLock erro:', err);
+    }
+  });
+
+  // --- 3. Modo Leitura Tela Cheia ---
+  const readingModeBtn = document.getElementById('readingModeBtn');
+  const exitReadingBtn = document.getElementById('exitReadingBtn');
+  function toggleReadingMode() {
+    document.body.classList.toggle('reading-mode');
+    const active = document.body.classList.contains('reading-mode');
+    exitReadingBtn.classList.toggle('hidden', !active);
+    if (alphaApi) alphaApi.render();
+  }
+  readingModeBtn.addEventListener('click', toggleReadingMode);
+  exitReadingBtn.addEventListener('click', toggleReadingMode);
+
+  // --- 4. Renderização AlphaTab ---
+  let alphaApi = null;
+  function loadScoreIntoAlphaTab(urlOrBuffer) {
+    const container = document.getElementById('alphaTabContainer');
+    container.innerHTML = '';
+    if (alphaApi) {
+      alphaApi.destroy();
+      alphaApi = null;
+    }
+
+    alphaApi = new alphaTab.AlphaTabApi(container, {
+      core: {
+        engine: 'svg',
+        logLevel: 'warning'
+      },
+      display: {
+        layoutMode: alphaTab.LayoutMode.Page,
+        staveProfile: alphaTab.StaveProfile.Score
+      },
+      player: {
+        enablePlayer: false // Usamos nossos stems reais sincronizados
+      }
+    });
+
+    if (typeof urlOrBuffer === 'string') {
+      alphaApi.load(urlOrBuffer);
+    } else {
+      alphaApi.load(urlOrBuffer);
+    }
+  }
+
+  // --- 5. Engine de Áudio Multifaixas Sincronizado ---
+  const tracks = {
+    drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
+    no_drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
+    vocals: { audio: new Audio(), vol: 0.8, mute: false, solo: false, loaded: false }
+  };
+
+  Object.values(tracks).forEach(t => {
+    t.audio.preload = 'auto';
+    t.audio.preservesPitch = true;
+  });
+
+  function updateMixerVolumes() {
+    const anySolo = Object.values(tracks).some(t => t.solo);
+    Object.values(tracks).forEach(t => {
+      if (anySolo) {
+        t.audio.volume = t.solo ? t.vol : 0;
+      } else {
+        t.audio.volume = t.mute ? 0 : t.vol;
+      }
+    });
+  }
+
+  document.querySelectorAll('.channel-strip').forEach(strip => {
+    const name = strip.dataset.track;
+    const slider = strip.querySelector('.vol-slider');
+    const muteBtn = strip.querySelector('[data-action="mute"]');
+    const soloBtn = strip.querySelector('[data-action="solo"]');
+
+    slider.addEventListener('input', () => {
+      tracks[name].vol = parseFloat(slider.value);
+      updateMixerVolumes();
+    });
+
+    muteBtn.addEventListener('click', () => {
+      tracks[name].mute = !tracks[name].mute;
+      muteBtn.classList.toggle('active', tracks[name].mute);
+      updateMixerVolumes();
+    });
+
+    soloBtn.addEventListener('click', () => {
+      tracks[name].solo = !tracks[name].solo;
+      soloBtn.classList.toggle('active', tracks[name].solo);
+      updateMixerVolumes();
+    });
+  });
+
+  function setTrackSource(name, src) {
+    if (!src) return;
+    tracks[name].audio.src = src;
+    tracks[name].loaded = true;
+  }
+
+  function getMasterTrack() {
+    if (tracks.no_drums.loaded) return tracks.no_drums.audio;
+    if (tracks.drums.loaded) return tracks.drums.audio;
+    if (tracks.vocals.loaded) return tracks.vocals.audio;
+    return null;
+  }
+
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const seekSlider = document.getElementById('seekSlider');
+  const speedSlider = document.getElementById('speedSlider');
+  const speedVal = document.getElementById('speedVal');
+  const timeCurrent = document.getElementById('timeCurrent');
+  const timeTotal = document.getElementById('timeTotal');
+
+  function formatTime(sec) {
+    if (!isFinite(sec)) return '00:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  let isPlaying = false;
+
+  playPauseBtn.addEventListener('click', async () => {
+    const master = getMasterTrack();
+    if (!master) {
+      alert('Carregue uma música primeiro.');
+      return;
+    }
+
+    if (!isPlaying) {
+      const t = master.currentTime;
+      const rate = parseFloat(speedSlider.value);
+      updateMixerVolumes();
+      for (const tr of Object.values(tracks)) {
+        if (tr.loaded) {
+          tr.audio.currentTime = t;
+          tr.audio.playbackRate = rate;
+          await tr.audio.play();
+        }
+      }
+      isPlaying = true;
+      playPauseBtn.textContent = '⏸ Pausar';
+    } else {
+      for (const tr of Object.values(tracks)) {
+        if (tr.loaded) tr.audio.pause();
+      }
+      isPlaying = false;
+      playPauseBtn.textContent = '▶ Tocar';
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    for (const tr of Object.values(tracks)) {
+      if (tr.loaded) {
+        tr.audio.pause();
+        tr.audio.currentTime = 0;
+      }
+    }
+    isPlaying = false;
+    playPauseBtn.textContent = '▶ Tocar';
+    seekSlider.value = 0;
+    timeCurrent.textContent = '00:00';
+  });
+
+  speedSlider.addEventListener('input', () => {
+    const rate = parseFloat(speedSlider.value);
+    speedVal.textContent = `${Math.round(rate * 100)}%`;
+    for (const tr of Object.values(tracks)) {
+      if (tr.loaded) tr.audio.playbackRate = rate;
+    }
+  });
+
+  seekSlider.addEventListener('input', () => {
+    const master = getMasterTrack();
+    if (!master || !isFinite(master.duration)) return;
+    const targetTime = (parseFloat(seekSlider.value) / 100) * master.duration;
+    for (const tr of Object.values(tracks)) {
+      if (tr.loaded) tr.audio.currentTime = targetTime;
+    }
+  });
+
+  setInterval(() => {
+    const master = getMasterTrack();
+    if (!master || !isFinite(master.duration)) return;
+    timeCurrent.textContent = formatTime(master.currentTime);
+    timeTotal.textContent = formatTime(master.duration);
+    seekSlider.value = (master.currentTime / master.duration) * 100;
+
+    // Mantém faixas alinhadas se houver pequeno desvio no mobile
+    if (isPlaying) {
+      for (const tr of Object.values(tracks)) {
+        if (tr.loaded && tr.audio !== master && Math.abs(tr.audio.currentTime - master.currentTime) > 0.08) {
+          tr.audio.currentTime = master.currentTime;
+        }
+      }
+    }
+  }, 250);
+
+  // --- 6. Integração com Backend FastAPI (YouTube) ---
+  const generateBtn = document.getElementById('generateBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressText = document.getElementById('progressText');
+  const progressPct = document.getElementById('progressPct');
+  const progressFill = document.getElementById('progressFill');
+
+  generateBtn.addEventListener('click', async () => {
+    const url = document.getElementById('ytUrl').value.trim();
+    if (!url) {
+      alert('Cole o link de um vídeo do YouTube.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('url', url);
+    formData.append('demucs_model', document.getElementById('demucsModel').value);
+    formData.append('whisper_model', 'small');
+    formData.append('language', document.getElementById('whisperLang').value);
+
+    const cookiesInput = document.getElementById('cookiesFile');
+    if (cookiesInput.files.length > 0) {
+      formData.append('cookies_file', cookiesInput.files[0]);
+    }
+
+    generateBtn.disabled = true;
+    progressWrap.style.display = 'block';
+    progressText.textContent = 'Enviando tarefa para o servidor...';
+    progressPct.textContent = '5%';
+    progressFill.style.width = '5%';
+
+    try {
+      const resp = await fetch('/api/process', { method: 'POST', body: formData });
+      if (!resp.ok) throw new Error('Falha ao iniciar o processamento.');
+      const { job_id } = await resp.json();
+
+      const poll = setInterval(async () => {
+        const stResp = await fetch(`/api/status/${job_id}`);
+        const st = await stResp.json();
+
+        progressText.textContent = st.step || 'Processando...';
+        progressPct.textContent = `${st.progress || 0}%`;
+        progressFill.style.width = `${st.progress || 0}%`;
+
+        if (st.status === 'completed') {
+          clearInterval(poll);
+          generateBtn.disabled = false;
+          const res = st.result;
+
+          document.getElementById('songTitleDisplay').textContent = res.title;
+          document.getElementById('songMetaDisplay').textContent = `• ${res.bpm} BPM • ${res.measures} compassos`;
+
+          loadScoreIntoAlphaTab(`/api/files/${job_id}/${res.musicxml}`);
+
+          if (res.audio_mp3.drums) setTrackSource('drums', `/api/files/${job_id}/${res.audio_mp3.drums}`);
+          if (res.audio_mp3.no_drums) setTrackSource('no_drums', `/api/files/${job_id}/${res.audio_mp3.no_drums}`);
+          if (res.audio_mp3.vocals) setTrackSource('vocals', `/api/files/${job_id}/${res.audio_mp3.vocals}`);
+
+          const dlDiv = document.getElementById('downloadLinks');
+          dlDiv.innerHTML = `
+            <a class="btn" href="/api/files/${job_id}/${res.musicxml}" download>📄 Baixar MusicXML</a>
+            <a class="btn btn-accent" href="/api/files/${job_id}/${res.zip}" download>📦 Baixar Kit WAV + MIDI (.zip)</a>
+          `;
+        } else if (st.status === 'error') {
+          clearInterval(poll);
+          generateBtn.disabled = false;
+          alert('Erro no servidor: ' + st.error);
+        }
+      }, 2500);
+
+    } catch (err) {
+      generateBtn.disabled = false;
+      alert(err.message);
+    }
+  });
+
+  // --- 7. Modo Local / Google Drive (Arquivos gerados no Colab) ---
+  document.getElementById('loadLocalBtn').addEventListener('click', async () => {
+    const xmlFile = document.getElementById('localXml').files[0];
+    const drumsFile = document.getElementById('localDrums').files[0];
+    const playbackFile = document.getElementById('localPlayback').files[0];
+    const vocalsFile = document.getElementById('localVocals').files[0];
+
+    if (!xmlFile) {
+      alert('Selecione pelo menos o arquivo .musicxml da partitura.');
+      return;
+    }
+
+    const buffer = await xmlFile.arrayBuffer();
+    loadScoreIntoAlphaTab(new Uint8Array(buffer));
+    document.getElementById('songTitleDisplay').textContent = xmlFile.name.replace(/\.[^/.]+$/, '');
+    document.getElementById('songMetaDisplay').textContent = '• Arquivo Local / Google Drive';
+
+    if (drumsFile) setTrackSource('drums', URL.createObjectURL(drumsFile));
+    if (playbackFile) setTrackSource('no_drums', URL.createObjectURL(playbackFile));
+    if (vocalsFile) setTrackSource('vocals', URL.createObjectURL(vocalsFile));
+  });
+</script>
+</body>
+</html>

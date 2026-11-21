@@ -17,7 +17,7 @@ from music21 import stream, note, chord, meter, tempo, clef, expressions, metada
 
 def sanitize_filename(name: str) -> str:
     clean = re.sub(r'[\\/*?:"<>|]', "", name).strip()
-    return clean[:80] if clean else "musica_youtube"
+    return clean[:80] if clean else "musica_drumscribe"
 
 
 def run_ffmpeg_convert(input_path: str, output_path: str, bitrate: str = "192k"):
@@ -30,35 +30,74 @@ def run_ffmpeg_convert(input_path: str, output_path: str, bitrate: str = "192k")
     subprocess.run(cmd, check=True)
 
 
+def convert_uploaded_to_wav(input_path: str, job_dir: str, original_name: str) -> tuple[str, str]:
+    wav_path = os.path.join(job_dir, "raw_audio.wav")
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-i", input_path,
+        "-ar", "44100",
+        "-ac", "2",
+        "-acodec", "pcm_s16le",
+        wav_path
+    ]
+    subprocess.run(cmd, check=True)
+    base_title = os.path.splitext(original_name)[0]
+    return wav_path, sanitize_filename(base_title)
+
+
 def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = None) -> tuple[str, str]:
     raw_template = os.path.join(job_dir, "raw_audio.%(ext)s")
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "outtmpl": raw_template,
-        "noplaylist": True,
-        "quiet": True,
-        "no_warnings": True,
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "wav",
-        }],
-        "postprocessor_args": [
-            "-ar", "44100",
-            "-ac", "2",
-            "-acodec", "pcm_s16le"
-        ],
-    }
-    if cookies_path and os.path.exists(cookies_path):
-        ydl_opts["cookiefile"] = cookies_path
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        title = sanitize_filename(info.get("title", "musica_youtube"))
+    # Tenta clientes que reduzem bloqueio de IP em servidores na nuvem sem exigir cookies
+    client_profiles = [
+        ["tv", "mweb"],
+        ["android_vr", "web"],
+        ["ios", "android"],
+    ]
 
-    wav_path = os.path.join(job_dir, "raw_audio.wav")
-    if not os.path.exists(wav_path):
-        raise FileNotFoundError("Falha ao converter o áudio do YouTube para WAV.")
-    return wav_path, title
+    last_error = None
+    title = "musica_youtube"
+
+    for clients in client_profiles:
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": raw_template,
+            "noplaylist": True,
+            "quiet": True,
+            "no_warnings": True,
+            "extractor_args": {
+                "youtube": {
+                    "player_client": clients
+                }
+            },
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "wav",
+            }],
+            "postprocessor_args": [
+                "-ar", "44100",
+                "-ac", "2",
+                "-acodec", "pcm_s16le"
+            ],
+        }
+        if cookies_path and os.path.exists(cookies_path):
+            ydl_opts["cookiefile"] = cookies_path
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                title = sanitize_filename(info.get("title", "musica_youtube"))
+            wav_path = os.path.join(job_dir, "raw_audio.wav")
+            if os.path.exists(wav_path):
+                return wav_path, title
+        except Exception as exc:
+            last_error = exc
+            continue
+
+    raise RuntimeError(
+        f"O YouTube bloqueou o IP do servidor para este vídeo ({last_error}). "
+        "Solução rápida sem cookies: baixe o MP3/M4A no seu celular e envie no campo 'Ou envie um arquivo de áudio/vídeo'."
+    )
 
 
 def separate_with_demucs(wav_path: str, job_dir: str, model: str = "htdemucs") -> Dict[str, str]:
@@ -82,7 +121,6 @@ def separate_with_demucs(wav_path: str, job_dir: str, model: str = "htdemucs") -
             shutil.copy2(p, dest)
             stems[part] = dest
 
-    # Cria playback completo sem a bateria (vocals + bass + other)
     playback_arrays = []
     sr = 44100
     for part in ["vocals", "bass", "other"]:
@@ -100,7 +138,6 @@ def separate_with_demucs(wav_path: str, job_dir: str, model: str = "htdemucs") -
         sf.write(no_drums_wav, mix, sr, subtype="PCM_16")
         stems["no_drums"] = no_drums_wav
 
-    # Gera versões MP3 leves para carregamento rápido no player do celular
     mp3_stems = {}
     for key, wpath in stems.items():
         mp3_path = os.path.join(job_dir, f"{key}.mp3")
@@ -166,11 +203,10 @@ def transcribe_drums_and_lyrics(
 
     sec_per_beat = 60.0 / bpm
     sec_per_16th = sec_per_beat / 4.0
-    sec_per_measure = sec_per_beat * 4.0  # Compasso 4/4
+    sec_per_measure = sec_per_beat * 4.0
     total_measures = max(1, int(math.ceil(duration_sec / sec_per_measure)))
     total_steps = total_measures * 16
 
-    # Separação espectral por peça da bateria
     y_kick = _bandpass_filter(y, sr, 40.0, 130.0)
     y_snare = _bandpass_filter(y, sr, 180.0, 2400.0)
     y_cymbal = _highpass_filter(y, sr, 6000.0)
@@ -179,7 +215,6 @@ def transcribe_drums_and_lyrics(
     snare_times, _ = _detect_band_onsets(y_snare, sr, delta=0.15)
     cymbal_times, cymbal_strengths = _detect_band_onsets(y_cymbal, sr, delta=0.10)
 
-    # Grade quantizada em semicolcheias (16 passos por compasso)
     grid: Dict[int, set] = {}
 
     for t in kick_times:
@@ -195,13 +230,11 @@ def transcribe_drums_and_lyrics(
     for t, strength in zip(cymbal_times, cymbal_strengths):
         step = int(round(t / sec_per_16th))
         if 0 <= step < total_steps:
-            # Picos muito fortes no agudo nos tempos fortes viram prato de ataque (crash)
             if strength > 0.72 and (step % 16 in (0, 8)):
                 grid.setdefault(step, set()).add("crash")
             else:
                 grid.setdefault(step, set()).add("hihat")
 
-    # Transcrição de letra sincronizada com Whisper na faixa de voz isolada
     lyrics_by_measure: Dict[int, list[str]] = {}
     if vocals_wav and os.path.exists(vocals_wav):
         if progress_cb:
@@ -232,7 +265,6 @@ def transcribe_drums_and_lyrics(
     if progress_cb:
         progress_cb(90, "Montando partitura MusicXML com clave de percussão e letras...")
 
-    # Construção da partitura MusicXML via music21
     score = stream.Score()
     score.insert(0, metadata.Metadata())
     score.metadata.title = title
@@ -242,8 +274,6 @@ def transcribe_drums_and_lyrics(
     part.id = "Drums"
     part.partName = "Bateria"
 
-    # Mapeamento padrão de leitura de bateria:
-    # F4 = Bumbo | C5 = Caixa | G5 (x) = Chimbal | A5 (x) = Prato Crash
     pitch_map = {
         "kick": ("F4", "normal"),
         "snare": ("C5", "normal"),
@@ -258,7 +288,6 @@ def transcribe_drums_and_lyrics(
             m.insert(0.0, meter.TimeSignature("4/4"))
             m.insert(0.0, tempo.MetronomeMark(number=bpm))
 
-        # Insere a letra cantada exatamente acima do compasso correspondente
         if m_idx in lyrics_by_measure:
             frase = " ".join(lyrics_by_measure[m_idx])
             txt_exp = expressions.TextExpression(frase)
@@ -273,12 +302,10 @@ def transcribe_drums_and_lyrics(
             abs_step = base_step + step_offset
             hits = grid.get(abs_step, set())
 
-            # Calcula quantas semicolcheias livre até a próxima nota dentro do compasso
             span = 1
             while (step_offset + span) < 16 and not grid.get(base_step + step_offset + span):
                 span += 1
 
-            # Agrupa durações limpas (4 = semínima, 2 = colcheia, 1 = semicolcheia)
             if span >= 4 and (step_offset % 4 == 0):
                 dur_steps = 4
             elif span >= 2 and (step_offset % 2 == 0):
@@ -289,8 +316,7 @@ def transcribe_drums_and_lyrics(
             quarter_len = dur_steps * 0.25
 
             if not hits:
-                r = note.Rest(quarterLength=quarter_len)
-                m.append(r)
+                m.append(note.Rest(quarterLength=quarter_len))
             elif len(hits) == 1:
                 piece = next(iter(hits))
                 p_name, n_head = pitch_map[piece]
@@ -332,11 +358,20 @@ def process_full_pipeline(
     whisper_model: str = "small",
     language: str = "pt",
     cookies_path: Optional[str] = None,
+    uploaded_media_path: Optional[str] = None,
+    uploaded_media_name: Optional[str] = None,
     progress_cb: Optional[Callable[[int, str], None]] = None
 ) -> Dict[str, Any]:
-    if progress_cb:
-        progress_cb(10, "Baixando áudio do YouTube em WAV...")
-    wav_path, title = download_youtube_wav(url, job_dir, cookies_path=cookies_path)
+    if uploaded_media_path and os.path.exists(uploaded_media_path):
+        if progress_cb:
+            progress_cb(12, "Convertendo arquivo enviado para WAV...")
+        wav_path, title = convert_uploaded_to_wav(
+            uploaded_media_path, job_dir, uploaded_media_name or "musica_enviada.mp3"
+        )
+    else:
+        if progress_cb:
+            progress_cb(10, "Baixando áudio do link em WAV...")
+        wav_path, title = download_youtube_wav(url, job_dir, cookies_path=cookies_path)
 
     if progress_cb:
         progress_cb(30, f"Separando instrumentos com Demucs ({demucs_model})...")

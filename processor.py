@@ -243,9 +243,13 @@ def _highpass_filter(y: np.ndarray, sr: int, cutoff: float) -> np.ndarray:
 def _detect_band_onsets(y_band: np.ndarray, sr: int, delta: float = 0.12) -> tuple[np.ndarray, np.ndarray]:
     hop_length = 256
     onset_env = librosa.onset.onset_strength(y=y_band, sr=sr, hop_length=hop_length)
-    max_val = float(np.max(onset_env)) if len(onset_env) > 0 else 0.0
-    if max_val > 0:
-        onset_env = onset_env / max_val
+    if len(onset_env) > 0:
+        ref_val = float(np.percentile(onset_env, 95))
+        if ref_val <= 0:
+            ref_val = float(np.max(onset_env))
+        if ref_val > 0:
+            onset_env = np.clip(onset_env / ref_val, 0.0, 1.5)
+
     peaks = librosa.onset.onset_detect(
         onset_envelope=onset_env,
         sr=sr,
@@ -265,6 +269,11 @@ def _build_drum_musicxml(
     measures_events: List[List[tuple[int, set]]],
     lyrics_by_measure: Dict[int, List[str]]
 ) -> str:
+    """
+    MusicXML 3.1 com numeração MIDI 1-based (GM MIDI + 1):
+    37 = Bumbo (Bass Drum 1), 39 = Caixa (Acoustic Snare),
+    43 = Chimbal (Closed Hi-Hat), 48 = Tom (Low-Mid Tom), 50 = Crash (Crash Cymbal 1).
+    """
     score = ET.Element("score-partwise", version="3.1")
     work = ET.SubElement(score, "work")
     ET.SubElement(work, "work-title").text = title
@@ -278,11 +287,11 @@ def _build_drum_musicxml(
     ET.SubElement(score_part, "part-name").text = "Bateria"
 
     instruments = [
-        ("P1-I36", "Bass Drum 1", 36),
-        ("P1-I39", "Acoustic Snare", 38),
-        ("P1-I43", "Closed Hi-Hat", 42),
-        ("P1-I48", "Low-Mid Tom", 47),
-        ("P1-I50", "Crash Cymbal 1", 49),
+        ("P1-I37", "Bass Drum 1", 37),
+        ("P1-I39", "Acoustic Snare", 39),
+        ("P1-I43", "Closed Hi-Hat", 43),
+        ("P1-I48", "Low-Mid Tom", 48),
+        ("P1-I50", "Crash Cymbal 1", 50),
     ]
     for inst_id, inst_name, midi_num in instruments:
         si = ET.SubElement(score_part, "score-instrument", id=inst_id)
@@ -295,7 +304,7 @@ def _build_drum_musicxml(
     part = ET.SubElement(score, "part", id="P1")
 
     piece_spec = {
-        "kick":  ("F", "4", "normal", "P1-I36"),
+        "kick":  ("F", "4", "normal", "P1-I37"),
         "snare": ("C", "5", "normal", "P1-I39"),
         "tom":   ("E", "5", "normal", "P1-I48"),
         "hihat": ("G", "5", "x",      "P1-I43"),
@@ -366,8 +375,7 @@ def _build_drum_musicxml(
                     if dot_flag:
                         ET.SubElement(n_el, "dot")
                     ET.SubElement(n_el, "stem").text = "up"
-                    if nhead != "normal":
-                        ET.SubElement(n_el, "notehead").text = nhead
+                    ET.SubElement(n_el, "notehead").text = nhead
 
     rough = ET.tostring(score, encoding="utf-8")
     parsed = minidom.parseString(rough)
@@ -403,9 +411,9 @@ def transcribe_drums_and_lyrics(
     y_snare = _bandpass_filter(y, sr, 180.0, 2400.0)
     y_cymbal = _highpass_filter(y, sr, 5500.0)
 
-    kick_times, _ = _detect_band_onsets(y_kick, sr, delta=0.13)
-    snare_times, _ = _detect_band_onsets(y_snare, sr, delta=0.14)
-    cymbal_times, cymbal_strengths = _detect_band_onsets(y_cymbal, sr, delta=0.09)
+    kick_times, _ = _detect_band_onsets(y_kick, sr, delta=0.18)
+    snare_times, _ = _detect_band_onsets(y_snare, sr, delta=0.20)
+    cymbal_times, cymbal_strengths = _detect_band_onsets(y_cymbal, sr, delta=0.15)
 
     all_onsets = np.concatenate([kick_times, snare_times, cymbal_times]) if (
         len(kick_times) + len(snare_times) + len(cymbal_times) > 0
@@ -444,7 +452,7 @@ def transcribe_drums_and_lyrics(
             continue
         step = int(round((t - grid_origin) / sec_per_16th))
         if 0 <= step < total_steps:
-            if strength > 0.72 and (step % 16 in (0, 8)):
+            if strength > 0.95 and (step % 16 in (0, 8)):
                 grid.setdefault(step, set()).add("crash")
             else:
                 grid.setdefault(step, set()).add("hihat")

@@ -1,15 +1,20 @@
 import os
+import json
 import time
 import uuid
 import shutil
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
-from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, Header, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from processor import process_full_pipeline
+from processor import (
+    process_full_pipeline,
+    get_library_root,
+    delete_item_from_github_library,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JOBS_DIR = os.path.join(BASE_DIR, "jobs")
@@ -18,7 +23,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 os.makedirs(JOBS_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
-app = FastAPI(title="DrumScribe Studio API", version="1.1.0")
+app = FastAPI(title="DrumScribe Studio API", version="1.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,7 +56,9 @@ def run_job_worker(
     language: str,
     cookies_path: Optional[str],
     uploaded_media_path: Optional[str],
-    uploaded_media_name: Optional[str]
+    uploaded_media_name: Optional[str],
+    github_token: Optional[str],
+    github_repo: str
 ):
     job_dir = os.path.join(JOBS_DIR, job_id)
 
@@ -71,6 +78,9 @@ def run_job_worker(
             cookies_path=cookies_path,
             uploaded_media_path=uploaded_media_path,
             uploaded_media_name=uploaded_media_name,
+            base_dir=BASE_DIR,
+            github_token=github_token,
+            github_repo=github_repo,
             progress_cb=update_progress
         )
         JOBS[job_id]["status"] = "completed"
@@ -99,6 +109,8 @@ async def start_processing(
     demucs_model: str = Form("htdemucs"),
     whisper_model: str = Form("small"),
     language: str = Form("pt"),
+    github_token: str = Form(""),
+    github_repo: str = Form("Gabriel20gvn/drumscribe-studio"),
     cookies_file: Optional[UploadFile] = File(None),
     media_file: Optional[UploadFile] = File(None)
 ):
@@ -146,7 +158,9 @@ async def start_processing(
         language,
         cookies_path,
         uploaded_media_path,
-        uploaded_media_name
+        uploaded_media_name,
+        github_token.strip() or None,
+        github_repo.strip() or "Gabriel20gvn/drumscribe-studio"
     )
 
     return {"job_id": job_id}
@@ -165,7 +179,59 @@ async def get_job_file(job_id: str, filename: str):
     file_path = os.path.join(JOBS_DIR, job_id, safe_name)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Arquivo não encontrado.")
+    return _serve_media_file(file_path, safe_name)
 
+
+@app.get("/api/library")
+async def list_library():
+    lib_root = get_library_root(BASE_DIR)
+    items: List[Dict[str, Any]] = []
+    if os.path.isdir(lib_root):
+        for entry in os.listdir(lib_root):
+            meta_path = os.path.join(lib_root, entry, "meta.json")
+            if os.path.isfile(meta_path):
+                try:
+                    with open(meta_path, "r", encoding="utf-8") as f:
+                        items.append(json.load(f))
+                except Exception:
+                    continue
+    items.sort(key=lambda x: x.get("created_at", 0), reverse=True)
+    return {
+        "storage": "google_drive" if lib_root.startswith("/content/drive") else "local",
+        "items": items
+    }
+
+
+@app.get("/api/library/{item_id}/{filename}")
+async def get_library_file(item_id: str, filename: str):
+    safe_id = os.path.basename(item_id)
+    safe_name = os.path.basename(filename)
+    file_path = os.path.join(get_library_root(BASE_DIR), safe_id, safe_name)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Arquivo da biblioteca não encontrado.")
+    return _serve_media_file(file_path, safe_name)
+
+
+@app.delete("/api/library/{item_id}")
+async def delete_library_item(
+    item_id: str,
+    x_github_token: Optional[str] = Header(None),
+    x_github_repo: Optional[str] = Header("Gabriel20gvn/drumscribe-studio")
+):
+    safe_id = os.path.basename(item_id)
+    item_dir = os.path.join(get_library_root(BASE_DIR), safe_id)
+    if os.path.isdir(item_dir):
+        shutil.rmtree(item_dir, ignore_errors=True)
+    token = (x_github_token or os.environ.get("GITHUB_TOKEN") or "").strip()
+    if token:
+        try:
+            delete_item_from_github_library(safe_id, token, x_github_repo or "Gabriel20gvn/drumscribe-studio")
+        except Exception:
+            pass
+    return {"deleted": True, "id": safe_id}
+
+
+def _serve_media_file(file_path: str, safe_name: str):
     media_type = None
     if safe_name.endswith(".musicxml") or safe_name.endswith(".xml"):
         media_type = "application/vnd.recordare.musicxml+xml"
@@ -175,5 +241,4 @@ async def get_job_file(job_id: str, filename: str):
         media_type = "audio/wav"
     elif safe_name.endswith(".zip"):
         media_type = "application/zip"
-
     return FileResponse(path=file_path, filename=safe_name, media_type=media_type)

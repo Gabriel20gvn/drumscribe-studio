@@ -4,473 +4,88 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DrumScribe Studio — Partituras de Bateria &amp; Stems</title>
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#111311" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icons/icon-192.png" />
   <script src="./vendor/alphatab/alphaTab.min.js"></script>
   <script src="./score-format.js"></script>
   <script src="./drum-grid.js"></script>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface-2: #334155;
-      --primary: #38bdf8;
-      --primary-hover: #0284c7;
-      --accent: #22c55e;
-      --danger: #ef4444;
-      --warn: #f59e0b;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --border: #334155;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.45;
-      padding-bottom: 120px;
-    }
-
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
-
-    .brand {
-      font-weight: 700;
-      font-size: 1.05rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--primary);
-    }
-
-    .header-actions { display: flex; gap: 8px; }
-
-    .btn {
-      background: var(--surface-2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: 0.15s;
-      text-decoration: none;
-    }
-    .btn:hover { filter: brightness(1.1); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: var(--primary); color: #0f172a; border-color: var(--primary); }
-    .btn-accent { background: var(--accent); color: #052e16; border-color: var(--accent); }
-    .btn-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
-    .btn-active { background: var(--warn); color: #0f172a; border-color: var(--warn); }
-
-    .container { max-width: 1100px; margin: 16px auto; padding: 0 12px; }
-
-    .tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-    .tab-btn {
-      flex: 1;
-      min-width: 140px;
-      padding: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      font-size: 0.88rem;
-    }
-    .tab-btn.active {
-      background: var(--surface-2);
-      color: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 14px;
-    }
-
-    .server-bar {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .server-status {
-      font-size: 0.8rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--danger);
-      display: inline-block;
-    }
-    .dot.online { background: var(--accent); }
-
-    .grid-form { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    @media (min-width: 700px) { .grid-form { grid-template-columns: 2fr 1fr 1fr; } }
-
-    label {
-      display: block;
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
-
-    input[type="text"], input[type="password"], select, input[type="file"] {
-      width: 100%;
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 10px;
-      font-size: 0.9rem;
-    }
-
-    details.cloud-config {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-top: 12px;
-    }
-    details.cloud-config summary {
-      cursor: pointer;
-      font-size: 0.83rem;
-      font-weight: 600;
-      color: var(--primary);
-      user-select: none;
-    }
-
-    .progress-wrap { margin-top: 14px; display: none; }
-    .progress-bar-bg {
-      width: 100%;
-      height: 10px;
-      background: var(--bg);
-      border-radius: 999px;
-      overflow: hidden;
-      margin: 6px 0;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
-      transition: width 0.4s ease;
-    }
-
-    .library-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .library-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 10px;
-    }
-    .lib-item {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .lib-item.current {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 1px var(--primary);
-    }
-    .lib-title {
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--text);
-      word-break: break-word;
-    }
-    .lib-meta {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 4px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-    .badge {
-      font-size: 0.7rem;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-weight: 700;
-      background: var(--surface-2);
-      color: var(--primary);
-    }
-    .badge.offline { color: var(--accent); }
-    .lib-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .mixer-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .channel-strip {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-    }
-    .channel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-    .ms-btns { display: flex; gap: 4px; }
-    .ms-btn {
-      width: 26px; height: 24px;
-      border-radius: 5px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--muted);
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .ms-btn.mute.active { background: var(--danger); color: #fff; border-color: var(--danger); }
-    .ms-btn.solo.active { background: var(--warn); color: #000; border-color: var(--warn); }
-
-    input[type="range"] { width: 100%; accent-color: var(--primary); }
-
-    .score-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .score-view-controls { display: inline-flex; align-items: center; gap: 5px; }
-    #drumGridContainer { display: grid; gap: 12px; }
-    .drum-grid-card {
-      overflow-x: auto;
-      background: #242a25;
-      border: 1px solid #485447;
-      border-radius: 10px;
-      padding: 10px 8px 5px;
-      scroll-margin-top: 18px;
-    }
-    .drum-grid-heading { display: flex; gap: 12px; align-items: baseline; color: #d1dccd; font-size: .8rem; margin: 0 0 5px 7px; }
-    .drum-grid-heading span { font-style: italic; overflow-wrap: anywhere; }
-    .drum-grid-svg { display: block; width: 100%; height: auto; }
-    .grid-beat { fill: #262d27; }
-    .grid-beat-alt { fill: #2c332d; }
-    .grid-beat-line { stroke: #485449; stroke-width: 1; }
-    .grid-lane-line { stroke: #687668; stroke-width: .7; stroke-dasharray: 3 5; }
-    .grid-count, .grid-hit, .grid-label text { text-anchor: middle; dominant-baseline: middle; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .grid-count { fill: #b1c0aa; font-size: 14px; }
-    .grid-main-count { fill: #f4f6ed; font-weight: bold; }
-    .grid-hit { fill: #f2f4e9; font-size: 18px; font-weight: bold; }
-    .grid-ghost { font-size: 14px; fill: #c0cec0; }
-    .grid-label rect { fill: #252c25; stroke: #4b5a4c; }
-    .grid-label text { fill: #7d917d; font-size: 13px; }
-    .grid-has-hits rect { stroke: #bca456; }
-    .grid-has-hits text { fill: #e8d394; }
-    .grid-playhead { stroke: #fb7185; stroke-width: 3; opacity: 0; pointer-events: none; }
-    .drum-grid-card.grid-current .grid-playhead { opacity: 1; }
-    #alphaTabContainer {
-      position: relative;
-      background: #ffffff;
-      color: #000000;
-      border-radius: 10px;
-      padding: 12px;
-      min-height: 420px;
-      overflow-x: auto;
-    }
-    #alphaTabContainer svg [fill^="rgba(0,0,0,0.392"] {
-      fill: #111111 !important;
-    }
-    .score-playhead {
-      position: absolute;
-      left: 0;
-      top: 0;
-      z-index: 5;
-      width: 3px;
-      min-height: 36px;
-      background: #ef4444;
-      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.16);
-      border-radius: 3px;
-      pointer-events: none;
-      will-change: transform;
-    }
-    .legend-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      font-size: 0.76rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    body.reading-mode header,
-    body.reading-mode .setup-section,
-    body.reading-mode .mixer-card { display: none !important; }
-    body.reading-mode .container { max-width: 100%; margin: 0; padding: 4px; }
-
-    @media (orientation: landscape) and (max-height: 550px) and (max-width: 1000px) {
-      body.has-score header,
-      body.has-score .setup-section,
-      body.has-score .mixer-card,
-      body.has-score .legend-bar { display: none !important; }
-      body.has-score { padding-bottom: 58px; }
-      body.has-score .container { max-width: none; margin: 0; padding: 0 4px; }
-      body.has-score #scoreCard { margin: 0; padding: 4px; }
-      body.has-score .score-toolbar {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        background: var(--surface);
-        margin-bottom: 4px;
-        padding: 3px 4px;
-        gap: 4px;
-      }
-      body.has-score #songTitleDisplay { display: block; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .8rem; }
-      body.has-score #songMetaDisplay { display: none; }
-      body.has-score .score-toolbar label { font-size: .74rem; }
-      body.has-score .score-toolbar select { padding: 4px !important; }
-      body.has-score .score-toolbar .btn { padding: 4px 7px; }
-      body.has-score #exitReadingBtn { display: none !important; }
-      body.has-score #speedSlider { width: 75px !important; }
-      body.has-score #alphaTabContainer { padding: 4px; min-height: 0; }
-      body.has-score #drumGridContainer { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
-      body.has-score .drum-grid-card { padding: 5px 3px 1px; }
-      body.has-score .drum-grid-heading { margin-bottom: 1px; }
-      body.has-score .transport-bar { padding: 4px 8px; gap: 6px; }
-      body.has-score .transport-bar .btn { padding: 5px 8px; }
-      body.has-score .timeline-box { min-width: 0; }
-    }
-    @media (orientation: landscape) and (max-height: 550px) and (max-width: 700px) {
-      body.has-score #songTitleDisplay { display: none; }
-    }
-
-    .transport-bar {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: rgba(15, 23, 42, 0.96);
-      backdrop-filter: blur(8px);
-      border-top: 1px solid var(--border);
-      padding: 10px 16px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      z-index: 50;
-    }
-    .transport-controls { display: flex; align-items: center; gap: 8px; }
-    .timeline-box {
-      flex: 1;
-      min-width: 180px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-    .hidden { display: none !important; }
-  </style>
+  <link rel="stylesheet" href="./studio.css" />
 </head>
 <body>
 
-<header>
-  <div class="brand">🥁 DrumScribe Studio</div>
-  <div class="header-actions">
-    <button id="wakeLockBtn" class="btn" title="Impede a tela do celular de apagar">☀️ Tela Acesa</button>
-    <button id="readingModeBtn" class="btn">📖 Modo Leitura</button>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>DrumScribe <span class="brand-studio">Studio</span></span>
+    </div>
+    <div class="header-actions">
+      <button id="wakeLockBtn" class="btn" type="button" aria-pressed="false" title="Impede a tela do celular de apagar"><span class="ui-symbol" aria-hidden="true">☼</span><span id="wakeLockLabel">Tela acesa</span></button>
+      <button id="readingModeBtn" class="btn" type="button" disabled><span class="ui-symbol" aria-hidden="true">⛶</span>Modo leitura</button>
+    </div>
   </div>
 </header>
 
-<div class="container">
+<main class="container">
   <div class="setup-section">
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="libraryTab" id="libraryTabBtn">📚 Biblioteca (0)</button>
-      <button class="tab-btn" data-tab="youtubeTab">🎬 Gerar Partitura</button>
-      <button class="tab-btn" data-tab="localTab">📱 Abrir Arquivo</button>
-    </div>
+    <nav class="tabs" aria-label="Navegação do estúdio">
+      <button class="tab-btn active" type="button" data-tab="libraryTab" id="libraryTabBtn" aria-controls="libraryTab" aria-pressed="true">Biblioteca <span class="tab-count" id="libraryCount">0</span></button>
+      <button class="tab-btn" type="button" data-tab="youtubeTab" aria-controls="youtubeTab" aria-pressed="false">Gerar partitura</button>
+      <button class="tab-btn" type="button" data-tab="localTab" aria-controls="localTab" aria-pressed="false">Abrir arquivo</button>
+    </nav>
 
-    <div id="libraryTab" class="card">
+    <section id="libraryTab" aria-labelledby="libraryHeading">
+      <div class="library-intro">
+        <div class="intro-content">
+          <h1>Partituras para<br class="intro-break" /> tocar junto<span>.</span></h1>
+          <p>Abra uma música da sua biblioteca e pratique com as faixas sincronizadas.</p>
+          <button class="btn btn-primary" id="newScoreBtn" type="button"><span class="ui-symbol" aria-hidden="true">+</span> Nova partitura</button>
+        </div>
+        <div class="wave-art" aria-hidden="true">
+          <div class="wave-bars">
+            <i style="--peak:12%"></i><i style="--peak:21%"></i><i style="--peak:29%"></i><i style="--peak:14%"></i>
+            <i style="--peak:42%"></i><i style="--peak:64%"></i><i style="--peak:88%"></i><i style="--peak:41%"></i>
+            <i style="--peak:55%"></i><i style="--peak:28%"></i><i style="--peak:43%"></i><i style="--peak:18%"></i>
+            <i style="--peak:33%"></i><i style="--peak:57%"></i><i style="--peak:37%"></i><i style="--peak:83%"></i>
+            <i style="--peak:100%"></i><i style="--peak:68%"></i><i style="--peak:51%"></i><i style="--peak:78%"></i>
+            <i style="--peak:45%"></i><i style="--peak:28%"></i><i style="--peak:49%"></i><i style="--peak:20%"></i>
+            <i style="--peak:33%"></i><i style="--peak:61%"></i><i style="--peak:35%"></i><i style="--peak:53%"></i>
+            <i style="--peak:25%"></i><i style="--peak:38%"></i><i style="--peak:15%"></i><i style="--peak:19%"></i>
+          </div>
+        </div>
+      </div>
       <div class="library-toolbar">
-        <div style="flex:1; min-width:220px;">
-          <input type="text" id="librarySearch" placeholder="🔍 Buscar música salva na biblioteca..." />
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <span id="libraryStorageHint" style="font-size:0.78rem; color:var(--muted);">☁️ Nuvem GitHub + Cache Offline</span>
-          <button id="refreshLibraryBtn" class="btn" type="button">🔄 Atualizar</button>
+        <h2 id="libraryHeading">Minhas partituras</h2>
+        <div class="library-tools">
+          <label class="search-box" for="librarySearch"><span class="search-icon" aria-hidden="true"></span>
+            <input type="text" id="librarySearch" aria-label="Buscar música" placeholder="Buscar música" />
+          </label>
+          <button id="refreshLibraryBtn" class="btn" type="button" aria-label="Atualizar biblioteca" title="Atualizar biblioteca"><span class="ui-symbol" aria-hidden="true">↻</span></button>
         </div>
       </div>
-      <p id="offlineStatus" role="status" style="font-size:0.82rem; color:var(--muted); margin:8px 0 0;"></p>
-      <div id="libraryList" class="library-grid">
-        <p style="color:var(--muted); font-size:0.88rem;">Nenhuma partitura na biblioteca ainda. Gere sua primeira música na aba <strong>🎬 Gerar Partitura</strong>!</p>
-      </div>
-    </div>
+      <p id="offlineStatus" role="status"></p>
+      <div id="libraryList" class="library-grid" aria-busy="true"><p class="library-empty">Carregando partituras…</p></div>
+    </section>
 
     <div id="youtubeTab" class="card hidden">
+      <h1 class="panel-heading">Gerar partitura</h1>
       <div class="server-bar">
         <div style="flex:1; min-width:220px;">
-          <label for="apiBaseUrl">Link do Servidor Backend (Colab ou Local)</label>
+          <label for="apiBaseUrl">Endereço do servidor (Colab ou local)</label>
           <input type="text" id="apiBaseUrl" placeholder="https://xxxx.trycloudflare.com" />
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
           <span class="server-status" id="serverStatusText">
             <span class="dot" id="serverDot"></span> Aguardando servidor
           </span>
-          <button id="testServerBtn" class="btn" type="button">Testar Conexão</button>
+          <button id="testServerBtn" class="btn" type="button">Testar conexão</button>
         </div>
       </div>
 
       <div class="grid-form">
         <div>
-          <label for="ytUrl">Link da Música (YouTube, SoundCloud, etc.)</label>
+          <label for="ytUrl">Link da música</label>
           <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." />
         </div>
         <div>
@@ -493,24 +108,20 @@
 
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-top:12px;">
         <div style="flex:1; min-width:220px;">
-          <label for="mediaFile">Ou envie um arquivo de áudio/vídeo do PC (Opcional)</label>
+          <label for="mediaFile">Ou envie um arquivo de áudio ou vídeo</label>
           <input type="file" id="mediaFile" accept="audio/*,video/*" />
         </div>
-        <div style="flex:1; min-width:180px;">
-          <label for="cookiesFile">cookies.txt (Opcional)</label>
-          <input type="file" id="cookiesFile" accept=".txt" />
-        </div>
-        <button id="generateBtn" class="btn btn-primary" style="padding:10px 18px;">
-          ⚡ Gerar Partitura + Stems
+        <button id="generateBtn" class="btn btn-primary" type="button">
+          Gerar partitura <span class="ui-symbol" aria-hidden="true">→</span>
         </button>
       </div>
 
       <details class="cloud-config" id="cloudConfigDetails">
-        <summary>☁️ Configurar Sincronização Automática para o Celular (Configure 1x no PC)</summary>
+        <summary>Configurações avançadas</summary>
         <p style="font-size:0.78rem; color:var(--muted); margin:8px 0;">
           Cole seu <strong>GitHub Personal Access Token</strong> (permissão <code>Contents: Read and write</code> no repositório <code>drumscribe-studio</code>). Ele fica salvo apenas neste navegador e envia cada partitura gerada para o celular.
         </p>
-        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+        <div class="grid-form">
           <div>
             <label for="githubTokenInput">GitHub Token (github_pat_... ou ghp_...)</label>
             <input type="password" id="githubTokenInput" placeholder="Cole seu token aqui" />
@@ -518,6 +129,10 @@
           <div>
             <label for="githubRepoInput">Repositório GitHub</label>
             <input type="text" id="githubRepoInput" value="Gabriel20gvn/drumscribe-studio" />
+          </div>
+          <div>
+            <label for="cookiesFile">cookies.txt (opcional)</label>
+            <input type="file" id="cookiesFile" accept=".txt" />
           </div>
         </div>
       </details>
@@ -535,44 +150,42 @@
     </div>
 
     <div id="localTab" class="card hidden">
+      <h1 class="panel-heading">Abrir arquivo</h1>
       <p style="font-size:0.85rem; color:var(--muted); margin-bottom:10px;">
-        Selecione uma partitura <strong>.musicxml</strong> e os áudios salvos no dispositivo:
+        Importe uma partitura e, se quiser, adicione as faixas de áudio para tocar junto.
       </p>
       <div class="grid-form">
         <div>
-          <label for="localXml">1. Partitura (.musicxml ou .xml)</label>
+          <label for="localXml">Partitura (MusicXML, MIDI ou Guitar Pro)</label>
           <input type="file" id="localXml" accept=".musicxml,.xml,.mid,.gp,.gp5,.gpx" />
         </div>
         <div>
-          <label for="localDrums">2. Faixa Bateria (drums.wav / .mp3)</label>
+          <label for="localDrums">Bateria (opcional)</label>
           <input type="file" id="localDrums" accept="audio/*" />
         </div>
         <div>
-          <label for="localPlayback">3. Playback sem Bateria (.wav / .mp3)</label>
+          <label for="localPlayback">Playback sem bateria (opcional)</label>
           <input type="file" id="localPlayback" accept="audio/*" />
         </div>
       </div>
       <div style="margin-top:12px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
         <div style="flex:1; min-width:200px;">
-          <label for="localVocals">4. Faixa Voz (Opcional — vocals.wav / .mp3)</label>
+          <label for="localVocals">Voz guia (opcional)</label>
           <input type="file" id="localVocals" accept="audio/*" />
         </div>
-        <button id="loadLocalBtn" class="btn btn-accent" style="padding:10px 18px;">
-          📂 Carregar no Estúdio
+        <button id="loadLocalBtn" class="btn btn-primary" type="button">
+          Abrir no estúdio <span class="ui-symbol" aria-hidden="true">→</span>
         </button>
       </div>
     </div>
 
-    <div class="card mixer-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <strong style="font-size:0.95rem;">🎛️ Mixer de Estudo (Stems Sincronizados)</strong>
-        <div id="downloadLinks" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
-      </div>
+    <details class="card mixer-card">
+      <summary>Mixer e downloads</summary>
 
       <div class="mixer-grid">
         <div class="channel-strip" data-track="drums">
           <div class="channel-header">
-            <span>🥁 Bateria</span>
+            <span>Bateria</span>
             <div class="ms-btns">
               <button class="ms-btn mute" data-action="mute">M</button>
               <button class="ms-btn solo" data-action="solo">S</button>
@@ -583,7 +196,7 @@
 
         <div class="channel-strip" data-track="no_drums">
           <div class="channel-header">
-            <span>🎸 Playback (Sem Bateria)</span>
+            <span>Playback sem bateria</span>
             <div class="ms-btns">
               <button class="ms-btn mute" data-action="mute">M</button>
               <button class="ms-btn solo" data-action="solo">S</button>
@@ -594,7 +207,7 @@
 
         <div class="channel-strip" data-track="vocals">
           <div class="channel-header">
-            <span>🎤 Voz Guia</span>
+            <span>Voz guia</span>
             <div class="ms-btns">
               <button class="ms-btn mute" data-action="mute">M</button>
               <button class="ms-btn solo" data-action="solo">S</button>
@@ -603,35 +216,39 @@
           <input type="range" min="0" max="1" step="0.02" value="0.8" class="vol-slider" />
         </div>
       </div>
-    </div>
+      <div id="downloadLinks"></div>
+    </details>
   </div>
 
-  <div class="card" id="scoreCard">
+  <section class="card" id="scoreCard" aria-labelledby="songTitleDisplay">
     <div class="score-toolbar">
-      <div>
-        <strong id="songTitleDisplay">Partitura de Bateria</strong>
-        <span id="songMetaDisplay" style="font-size:0.8rem; color:var(--muted); margin-left:8px;"></span>
+      <div class="score-heading">
+        <h2 id="songTitleDisplay">Partitura de bateria</h2>
+        <span id="songMetaDisplay"></span>
       </div>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <div class="score-actions">
         <label class="score-view-controls" for="scoreViewSelect">Visualização
-          <select id="scoreViewSelect" style="width:auto; padding:6px;">
+          <select id="scoreViewSelect">
             <option value="staff">Partitura</option>
             <option value="grid">Grade</option>
           </select>
         </label>
         <label class="score-view-controls staff-only" for="barsPerRowSelect">Compassos/linha
-        <select id="barsPerRowSelect" style="width:60px; padding:6px;">
-          <option value="auto" selected>Auto</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="4">4</option>
-        </select>
+          <select id="barsPerRowSelect">
+            <option value="auto" selected>Auto</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="4">4</option>
+          </select>
         </label>
-        <button id="zoomOutBtn" class="btn staff-only" type="button" title="Diminuir zoom">🔍−</button>
-        <button id="zoomInBtn" class="btn staff-only" type="button" title="Aumentar zoom">🔍+</button>
-        <label style="margin:0;">Velocidade: <span id="speedVal">100%</span></label>
-        <input type="range" id="speedSlider" min="0.5" max="1.25" step="0.05" value="1.0" style="width:100px;" />
-        <button id="exitReadingBtn" class="btn hidden">Sair Leitura</button>
+        <div class="zoom-controls staff-only" role="group" aria-label="Zoom da partitura">
+          <button id="zoomOutBtn" class="btn" type="button" aria-label="Diminuir zoom" title="Diminuir zoom">−</button>
+          <button id="zoomInBtn" class="btn" type="button" aria-label="Aumentar zoom" title="Aumentar zoom">+</button>
+        </div>
+        <label class="speed-control" for="speedSlider">Velocidade <span id="speedVal">100%</span>
+          <input type="range" id="speedSlider" min="0.5" max="1.25" step="0.05" value="1.0" />
+        </label>
+        <button id="exitReadingBtn" class="btn hidden" type="button">Sair da leitura</button>
       </div>
     </div>
     <div class="legend-bar">
@@ -648,33 +265,40 @@
       </p>
     </div>
     <div id="drumGridContainer" class="hidden"><p>Escolha uma música na Biblioteca ou gere uma partitura para ver a grade.</p></div>
-  </div>
-</div>
+  </section>
+</main>
 
-<div class="transport-bar">
-  <div class="transport-controls">
-    <button id="playPauseBtn" class="btn btn-primary">▶ Tocar</button>
-    <button id="stopBtn" class="btn">⏹ Parar</button>
-  </div>
-  <div class="timeline-box">
-    <span id="timeCurrent">00:00</span>
-    <input type="range" id="seekSlider" min="0" max="100" step="0.1" value="0" />
-    <span id="timeTotal">00:00</span>
+<div class="transport-bar" role="region" aria-label="Reprodução">
+  <div class="transport-inner">
+    <div class="transport-controls">
+      <button id="playPauseBtn" class="btn btn-primary" type="button" disabled><span class="play-icon" aria-hidden="true"></span><span id="playPauseLabel">Tocar</span></button>
+      <button id="stopBtn" class="btn" type="button" title="Parar" aria-label="Parar" disabled><span class="stop-icon" aria-hidden="true"></span></button>
+    </div>
+    <div class="timeline-box">
+      <span id="timeCurrent">00:00</span>
+      <input type="range" id="seekSlider" min="0" max="100" step="0.1" value="0" aria-label="Posição na música" disabled />
+      <span id="timeTotal">00:00</span>
+    </div>
   </div>
 </div>
 
 <script>
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('youtubeTab').classList.add('hidden');
-      document.getElementById('libraryTab').classList.add('hidden');
-      document.getElementById('localTab').classList.add('hidden');
-      const target = document.getElementById(btn.dataset.tab);
-      if (target) target.classList.remove('hidden');
+      tabButtons.forEach(button => {
+        const selected = button === btn;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+        document.getElementById(button.dataset.tab).classList.toggle('hidden', !selected);
+      });
       if (btn.dataset.tab === 'libraryTab') refreshLibrary();
     });
+  });
+  document.getElementById('newScoreBtn').addEventListener('click', () => {
+    const generateTab = document.querySelector('[data-tab="youtubeTab"]');
+    generateTab.click();
+    generateTab.focus();
   });
 
   const DEFAULT_REPO = 'Gabriel20gvn/drumscribe-studio';
@@ -926,7 +550,8 @@
     }
 
     mergedLibrary = Array.from(byId.values()).sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
-    document.getElementById('libraryTabBtn').textContent = `📚 Biblioteca (${mergedLibrary.length})`;
+    document.getElementById('libraryCount').textContent = mergedLibrary.length;
+    document.getElementById('libraryList').setAttribute('aria-busy', 'false');
     renderLibraryList();
   }
 
@@ -936,7 +561,9 @@
     const filtered = mergedLibrary.filter(it => !query || it.title.toLowerCase().includes(query));
 
     if (filtered.length === 0) {
-      container.innerHTML = `<p style="color:var(--muted); font-size:0.88rem;">Nenhuma partitura na biblioteca ainda. Gere sua primeira música na aba <strong>🎬 Gerar Partitura</strong>!</p>`;
+      container.innerHTML = query
+        ? '<p class="library-empty">Nenhuma música encontrada.</p>'
+        : '<p class="library-empty">Sua biblioteca está vazia. Gere uma partitura ou importe um arquivo para começar.</p>';
       return;
     }
 
@@ -945,32 +572,42 @@
         ? new Date(item.created_at * 1000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
         : '';
       const badges = [];
-      if (item.hasCloud) badges.push('<span class="badge">☁️ Nuvem (Todos dispositivos)</span>');
+      if (item.hasCloud) badges.push('<span class="badge">Na nuvem</span>');
       const required = item.cloudMeta?.audio_mp3 || item.serverMeta?.audio_mp3 || {};
       const missingAudio = Boolean((required.drums && !item.hasDrums) || (required.no_drums && !item.hasNoDrums) || (required.vocals && !item.hasVocals));
       const readyOffline = item.hasLocal && !missingAudio;
-      if (item.hasLocal) badges.push(`<span class="badge offline">📱 ${readyOffline ? 'Pronto offline' : 'Partitura offline'}</span>`);
-      if (!item.hasCloud && item.hasServer) badges.push('<span class="badge">🖥️ Servidor</span>');
+      if (item.hasLocal) badges.push(`<span class="badge offline">${readyOffline ? 'Pronto offline' : 'Partitura offline'}</span>`);
+      if (!item.hasCloud && item.hasServer) badges.push('<span class="badge">No servidor</span>');
+      const details = [
+        Number(item.bpm) > 0 ? `${Number(item.bpm)} BPM` : '',
+        Number(item.measures) > 0 ? `${Number(item.measures)} comp.` : '',
+        dateStr
+      ].filter(Boolean);
 
       return `
-        <div class="lib-item ${activeLibraryId === item.id ? 'current' : ''}">
+        <article class="lib-item ${activeLibraryId === item.id ? 'current' : ''}" data-score-id="${escapeHtml(item.id)}">
+          <div class="track-mark" aria-hidden="true">♪</div>
           <div>
             <div class="lib-title">${escapeHtml(item.title)}</div>
-            <div class="lib-meta">
-              <span>${item.bpm} BPM • ${item.measures} comp.</span>
-              ${dateStr ? `<span>• ${dateStr}</span>` : ''}
-            </div>
-            <div class="lib-meta">${badges.join(' ')}</div>
+            <div class="lib-meta">${details.length ? `<span>${details.join(' · ')}</span>` : ''}${badges.join(' ')}</div>
           </div>
           <div class="lib-actions">
-            <button class="btn btn-primary" onclick="openLibraryItem('${item.id}')">▶ Abrir</button>
-            ${(item.hasCloud || item.hasServer) && !readyOffline ? `<button class="btn btn-accent" onclick="saveLibraryItemOffline('${item.id}')">⬇ Salvar no celular</button>` : ''}
-            <button class="btn btn-danger" onclick="removeLibraryItem('${item.id}')">🗑️</button>
+            <button class="btn" data-library-action="open" type="button">Abrir <span class="ui-symbol" aria-hidden="true">→</span></button>
+            ${(item.hasCloud || item.hasServer) && !readyOffline ? '<button class="btn btn-accent" data-library-action="save" type="button"><span class="ui-symbol" aria-hidden="true">↓</span> Salvar offline</button>' : ''}
+            <button class="btn btn-danger remove-score" data-library-action="remove" type="button" aria-label="Remover partitura" title="Remover partitura"><span class="trash-icon" aria-hidden="true"></span></button>
           </div>
-        </div>
+        </article>
       `;
     }).join('');
   }
+
+  document.getElementById('libraryList').addEventListener('click', event => {
+    const button = event.target.closest('[data-library-action]');
+    if (!button) return;
+    const id = button.closest('[data-score-id]').dataset.scoreId;
+    const actions = { open: window.openLibraryItem, save: window.saveLibraryItemOffline, remove: window.removeLibraryItem };
+    actions[button.dataset.libraryAction](id);
+  });
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
@@ -1122,17 +759,20 @@
 
   let wakeLock = null;
   const wakeLockBtn = document.getElementById('wakeLockBtn');
+  const wakeLockLabel = document.getElementById('wakeLockLabel');
   wakeLockBtn.addEventListener('click', async () => {
     if (!('wakeLock' in navigator)) return alert('Seu navegador não suporta bloqueio de descanso de tela.');
     try {
       if (!wakeLock) {
         wakeLock = await navigator.wakeLock.request('screen');
         wakeLockBtn.classList.add('btn-active');
-        wakeLockBtn.textContent = '☀️ Tela Travada';
+        wakeLockBtn.setAttribute('aria-pressed', 'true');
+        wakeLockLabel.textContent = 'Tela mantida acesa';
         wakeLock.addEventListener('release', () => {
           wakeLock = null;
           wakeLockBtn.classList.remove('btn-active');
-          wakeLockBtn.textContent = '☀️ Tela Acesa';
+          wakeLockBtn.setAttribute('aria-pressed', 'false');
+          wakeLockLabel.textContent = 'Tela acesa';
         });
       } else {
         await wakeLock.release();
@@ -1334,6 +974,7 @@
       return;
     }
     document.body.classList.add('has-score');
+    readingModeBtn.disabled = false;
 
     alphaApi = new alphaTab.AlphaTabApi(container, {
       core: {
@@ -1412,11 +1053,12 @@
   });
 
   function resetTracks() {
+    stopPlayback();
     Object.values(tracks).forEach(t => {
-      t.audio.pause();
       t.audio.removeAttribute('src');
       t.loaded = false;
     });
+    updateTransportAvailability();
   }
 
   function updateMixerVolumes() {
@@ -1431,16 +1073,24 @@
     const slider = strip.querySelector('.vol-slider');
     const muteBtn = strip.querySelector('[data-action="mute"]');
     const soloBtn = strip.querySelector('[data-action="solo"]');
+    const trackLabel = strip.querySelector('.channel-header span').textContent;
+    slider.setAttribute('aria-label', `Volume: ${trackLabel}`);
+    muteBtn.setAttribute('aria-label', `Silenciar: ${trackLabel}`);
+    soloBtn.setAttribute('aria-label', `Solo: ${trackLabel}`);
+    muteBtn.setAttribute('aria-pressed', 'false');
+    soloBtn.setAttribute('aria-pressed', 'false');
 
     slider.addEventListener('input', () => { tracks[name].vol = parseFloat(slider.value); updateMixerVolumes(); });
     muteBtn.addEventListener('click', () => {
       tracks[name].mute = !tracks[name].mute;
       muteBtn.classList.toggle('active', tracks[name].mute);
+      muteBtn.setAttribute('aria-pressed', String(tracks[name].mute));
       updateMixerVolumes();
     });
     soloBtn.addEventListener('click', () => {
       tracks[name].solo = !tracks[name].solo;
       soloBtn.classList.toggle('active', tracks[name].solo);
+      soloBtn.setAttribute('aria-pressed', String(tracks[name].solo));
       updateMixerVolumes();
     });
   });
@@ -1449,6 +1099,7 @@
     if (!src) return;
     tracks[name].audio.src = src;
     tracks[name].loaded = true;
+    updateTransportAvailability();
   }
 
   function getMasterTrack() {
@@ -1458,6 +1109,7 @@
   }
 
   const playPauseBtn = document.getElementById('playPauseBtn');
+  const playPauseLabel = document.getElementById('playPauseLabel');
   const stopBtn = document.getElementById('stopBtn');
   const seekSlider = document.getElementById('seekSlider');
   const speedSlider = document.getElementById('speedSlider');
@@ -1472,6 +1124,19 @@
 
   let isPlaying = false;
   let cursorFrame = null;
+
+  function updateTransportAvailability() {
+    const master = getMasterTrack();
+    playPauseBtn.disabled = !master;
+    stopBtn.disabled = !master;
+    seekSlider.disabled = !master || !Number.isFinite(master.duration) || master.duration <= 0;
+    if (!master) timeTotal.textContent = '00:00';
+  }
+
+  function setPlaybackButton(playing) {
+    playPauseBtn.classList.toggle('is-playing', playing);
+    playPauseLabel.textContent = playing ? 'Pausar' : 'Tocar';
+  }
 
   function paintScoreCursor() {
     cursorFrame = null;
@@ -1493,7 +1158,7 @@
     for (const tr of Object.values(tracks)) { if (tr.loaded) { tr.audio.pause(); tr.audio.currentTime = 0; } }
     isPlaying = false;
     stopCursorAnimation();
-    playPauseBtn.textContent = '▶ Tocar';
+    setPlaybackButton(false);
     seekSlider.value = 0;
     timeCurrent.textContent = '00:00';
     lastCursorBar = -1;
@@ -1524,25 +1189,28 @@
         }
       }
       isPlaying = true;
-      playPauseBtn.textContent = '⏸ Pausar';
+      setPlaybackButton(true);
       updateScorePlayhead(true);
       startCursorAnimation();
     } else {
       for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.pause(); }
       isPlaying = false;
       stopCursorAnimation();
-      playPauseBtn.textContent = '▶ Tocar';
+      setPlaybackButton(false);
       updateScorePlayhead();
     }
   });
 
-  Object.values(tracks).forEach(tr => tr.audio.addEventListener('ended', () => {
-    if (getMasterTrack() !== tr.audio) return;
-    isPlaying = false;
-    stopCursorAnimation();
-    playPauseBtn.textContent = '▶ Tocar';
-    updateScorePlayhead();
-  }));
+  Object.values(tracks).forEach(({ audio }) => {
+    audio.addEventListener('durationchange', updateTransportAvailability);
+    audio.addEventListener('ended', () => {
+      if (getMasterTrack() !== audio) return;
+      isPlaying = false;
+      stopCursorAnimation();
+      setPlaybackButton(false);
+      updateScorePlayhead();
+    });
+  });
 
   stopBtn.addEventListener('click', stopPlayback);
 
@@ -1657,6 +1325,7 @@
             if (drumsUrl) setTrackSource('drums', drumsUrl);
             if (noDrumsUrl) setTrackSource('no_drums', noDrumsUrl);
             if (vocalsUrl) setTrackSource('vocals', vocalsUrl);
+            document.getElementById('scoreCard').scrollIntoView();
 
             document.getElementById('downloadLinks').innerHTML = `
               <a class="btn" href="${xmlUrl}" download>📄 Baixar MusicXML</a>
@@ -1710,6 +1379,8 @@
     if (drumsFile) setTrackSource('drums', URL.createObjectURL(drumsFile));
     if (playbackFile) setTrackSource('no_drums', URL.createObjectURL(playbackFile));
     if (vocalsFile) setTrackSource('vocals', URL.createObjectURL(vocalsFile));
+    document.getElementById('downloadLinks').replaceChildren();
+    document.getElementById('scoreCard').scrollIntoView();
 
     const recId = `local_${Date.now()}`;
     await dbPutScore({

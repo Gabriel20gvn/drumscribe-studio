@@ -96,17 +96,24 @@ def run_job_worker(
 
 
 @app.get("/", response_class=HTMLResponse)
-async def serve_frontend():
-    index_path = os.path.join(STATIC_DIR, "index.html")
-    if not os.path.exists(index_path):
-        index_path = os.path.join(BASE_DIR, "index.html")
-    with open(index_path, "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
-
-
 @app.get("/index.html", response_class=HTMLResponse)
-async def serve_index():
-    return await serve_frontend()
+async def serve_frontend():
+    return FileResponse(os.path.join(BASE_DIR, "index.html"), media_type="text/html")
+
+
+@app.get("/studio.css")
+async def serve_studio_styles():
+    return FileResponse(os.path.join(BASE_DIR, "studio.css"), media_type="text/css")
+
+
+@app.get("/score-format.js")
+async def serve_score_format():
+    return FileResponse(os.path.join(BASE_DIR, "score-format.js"), media_type="application/javascript")
+
+
+@app.get("/drum-grid.js")
+async def serve_drum_grid():
+    return FileResponse(os.path.join(BASE_DIR, "drum-grid.js"), media_type="application/javascript")
 
 
 @app.get("/sw.js")

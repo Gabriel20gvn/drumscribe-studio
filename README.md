@@ -7,6 +7,7 @@ Aplicação web completa (Frontend + Backend Python) para baixar músicas do You
 - `app.py` — Backend FastAPI com fila de processamento em segundo plano e endpoints de download.
 - `processor.py` — Pipeline de áudio (`yt-dlp` → `Demucs` → `ADTOF-pytorch` → `Whisper` + `music21`). O ADTOF identifica bumbo, caixa, tom, chimbal e ataque sobre a faixa de bateria separada pelo Demucs.
 - `index.html` — Interface responsiva com renderizador AlphaTab, linha vermelha de acompanhamento, mixer Mute/Solo, controle de velocidade, modo leitura e botão *Tela Acesa* para celular.
+- `score-format.js` — Organiza as partituras geradas pelo app em duas vozes de bateria para leitura: pratos acima, bumbo/caixa/tom abaixo. A formatação visual preserva os instantes e instrumentos dos golpes.
 - `drumscribe_colab_backend.ipynb` — Notebook atualizado para instalar o ADTOF e iniciar o servidor no Google Colab.
 - `Dockerfile` — Configuração pronta para deploy gratuito com FFmpeg pré-instalado.
 - `requirements.txt` — Dependências Python.
@@ -22,6 +23,8 @@ Abra `drumscribe_colab_backend.ipynb` no Google Colab e execute as duas células
 Execute `!git pull` na pasta `/content/drumscribe-studio` e reinicie a célula do servidor. As partituras já existentes foram geradas pelo método anterior; gere a música outra vez para obter as notas do ADTOF. Mesmo com o novo modelo, a separação da bateria e a transcrição podem cometer erros, especialmente em músicas com instrumentos que vazam para a faixa de bateria.
 
 O cursor da partitura segue o áudio usando o BPM estimado e o início do primeiro compasso salvo com a nova transcrição. Em arquivos antigos ou MIDI importado, o cursor parte do início do áudio; nesses casos, a posição pode não coincidir com a gravação.
+
+No estúdio, a partitura abre com **2 compassos por linha**. O seletor discreto **Compassos/linha** permite escolher 1, 2 ou 4 e guarda a preferência no navegador. As partituras antigas recebem a divisão em vozes na exibição; as novas também são salvas assim no MusicXML. Os golpes e seus instantes não são alterados pela formatação.
 
 O modelo ADTOF foi apresentado por Zehren, Alunno e Bientinesi e distribuído sob licença CC BY-NC-SA 4.0 no projeto original. A integração usa o port PyTorch de `xavriley/ADTOF-pytorch`.
 

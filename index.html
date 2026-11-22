@@ -8,6 +8,7 @@
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icons/icon-192.png" />
   <script src="./vendor/alphatab/alphaTab.min.js"></script>
+  <script src="./score-format.js"></script>
   <style>
     :root {
       --bg: #0f172a;
@@ -297,6 +298,9 @@
       min-height: 420px;
       overflow-x: auto;
     }
+    #alphaTabContainer svg [fill^="rgba(0,0,0,0.392"] {
+      fill: #111111 !important;
+    }
     .score-playhead {
       position: absolute;
       z-index: 5;
@@ -540,6 +544,12 @@
         <span id="songMetaDisplay" style="font-size:0.8rem; color:var(--muted); margin-left:8px;"></span>
       </div>
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <label for="barsPerRowSelect" style="margin:0; font-size:0.8rem;">Compassos/linha</label>
+        <select id="barsPerRowSelect" style="width:60px; padding:6px;">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="4">4</option>
+        </select>
         <button id="zoomOutBtn" class="btn" type="button" title="Diminuir zoom">🔍−</button>
         <button id="zoomInBtn" class="btn" type="button" title="Aumentar zoom">🔍+</button>
         <label style="margin:0;">Velocidade: <span id="speedVal">100%</span></label>
@@ -1041,7 +1051,10 @@
   exitReadingBtn.addEventListener('click', toggleReadingMode);
 
   let alphaApi = null;
-  let scoreScale = 1.0;
+  let scoreScale = window.innerWidth < 600 ? 0.85 : 1.0;
+  const barsPerRowSelect = document.getElementById('barsPerRowSelect');
+  const savedBarsPerRow = Number(localStorage.getItem('drumscribe_bars_per_row'));
+  if ([1, 2, 4].includes(savedBarsPerRow)) barsPerRowSelect.value = String(savedBarsPerRow);
   let scoreAudioOffset = 0;
   let scoreBpm = 120;
   let lastCursorBar = -1;
@@ -1113,6 +1126,14 @@
     scoreScale = Math.max(0.6, +(scoreScale - 0.1).toFixed(1));
     if (alphaApi) { alphaApi.settings.display.scale = scoreScale; alphaApi.updateSettings(); alphaApi.render(); }
   });
+  barsPerRowSelect.addEventListener('change', () => {
+    localStorage.setItem('drumscribe_bars_per_row', barsPerRowSelect.value);
+    if (alphaApi) {
+      alphaApi.settings.display.barsPerRow = Number(barsPerRowSelect.value);
+      alphaApi.updateSettings();
+      alphaApi.render();
+    }
+  });
 
   function loadScoreIntoAlphaTab(urlOrBuffer, bpm = 0, audioOffset = 0) {
     const container = document.getElementById('alphaTabContainer');
@@ -1138,7 +1159,8 @@
       display: {
         layoutMode: alphaTab.LayoutMode.Page,
         staveProfile: alphaTab.StaveProfile.Score,
-        scale: scoreScale
+        scale: scoreScale,
+        barsPerRow: Number(barsPerRowSelect.value)
       },
       player: { enablePlayer: false }
     });
@@ -1157,7 +1179,20 @@
       updateScorePlayhead();
     });
 
-    alphaApi.load(urlOrBuffer);
+    const api = alphaApi;
+    if (urlOrBuffer instanceof Uint8Array) {
+      api.load(formatGeneratedDrumScore(urlOrBuffer));
+    } else {
+      fetch(urlOrBuffer)
+        .then(response => {
+          if (!response.ok) throw new Error('Falha ao carregar partitura');
+          return response.arrayBuffer();
+        })
+        .then(buffer => {
+          if (api === alphaApi) api.load(formatGeneratedDrumScore(new Uint8Array(buffer)));
+        })
+        .catch(() => { if (api === alphaApi) api.load(urlOrBuffer); });
+    }
   }
 
   const tracks = {

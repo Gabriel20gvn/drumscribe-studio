@@ -355,6 +355,43 @@ def _build_drum_musicxml(
         1:  ("16th", None),
     }
 
+    def append_voice(measure, hits_by_step: Dict[int, set], voice_number: int, stem: str):
+        positions = sorted(hits_by_step)
+        position = 0
+        while position < 16:
+            following = next((step for step in positions if step > position), 16)
+            span = following - position
+            dur_steps = next(steps for steps in dur_type_map if steps <= span)
+            note_type, dot_flag = dur_type_map[dur_steps]
+            hits = hits_by_step.get(position, set())
+            if not hits:
+                n_el = ET.SubElement(measure, "note")
+                ET.SubElement(n_el, "rest")
+                ET.SubElement(n_el, "duration").text = str(dur_steps)
+                ET.SubElement(n_el, "voice").text = str(voice_number)
+                ET.SubElement(n_el, "type").text = note_type
+                if dot_flag:
+                    ET.SubElement(n_el, "dot")
+            else:
+                ordered = [p for p in ["kick", "snare", "tom", "hihat", "crash"] if p in hits]
+                for idx_h, piece in enumerate(ordered):
+                    step, octave, nhead, inst_id = piece_spec[piece]
+                    n_el = ET.SubElement(measure, "note")
+                    if idx_h:
+                        ET.SubElement(n_el, "chord")
+                    unp = ET.SubElement(n_el, "unpitched")
+                    ET.SubElement(unp, "display-step").text = step
+                    ET.SubElement(unp, "display-octave").text = octave
+                    ET.SubElement(n_el, "duration").text = str(dur_steps)
+                    ET.SubElement(n_el, "instrument", id=inst_id)
+                    ET.SubElement(n_el, "voice").text = str(voice_number)
+                    ET.SubElement(n_el, "type").text = note_type
+                    if dot_flag:
+                        ET.SubElement(n_el, "dot")
+                    ET.SubElement(n_el, "stem").text = stem
+                    ET.SubElement(n_el, "notehead").text = nhead
+            position += dur_steps
+
     for m_idx, events in enumerate(measures_events):
         measure = ET.SubElement(part, "measure", number=str(m_idx + 1))
         if m_idx == 0:
@@ -381,34 +418,26 @@ def _build_drum_musicxml(
             words = ET.SubElement(dir_type, "words", **{"font-style": "italic", "font-size": "9"})
             words.text = frase
 
+        cymbals: Dict[int, set] = {}
+        kit: Dict[int, set] = {}
+        position = 0
         for dur_steps, hits in events:
-            note_type, dot_flag = dur_type_map.get(dur_steps, ("16th", None))
-            if not hits:
-                n_el = ET.SubElement(measure, "note")
-                ET.SubElement(n_el, "rest")
-                ET.SubElement(n_el, "duration").text = str(dur_steps)
-                ET.SubElement(n_el, "voice").text = "1"
-                ET.SubElement(n_el, "type").text = note_type
-                if dot_flag:
-                    ET.SubElement(n_el, "dot")
-            else:
-                ordered = [p for p in ["kick", "snare", "tom", "hihat", "crash"] if p in hits]
-                for idx_h, p in enumerate(ordered):
-                    step, octave, nhead, inst_id = piece_spec[p]
-                    n_el = ET.SubElement(measure, "note")
-                    if idx_h > 0:
-                        ET.SubElement(n_el, "chord")
-                    unp = ET.SubElement(n_el, "unpitched")
-                    ET.SubElement(unp, "display-step").text = step
-                    ET.SubElement(unp, "display-octave").text = octave
-                    ET.SubElement(n_el, "duration").text = str(dur_steps)
-                    ET.SubElement(n_el, "instrument", id=inst_id)
-                    ET.SubElement(n_el, "voice").text = "1"
-                    ET.SubElement(n_el, "type").text = note_type
-                    if dot_flag:
-                        ET.SubElement(n_el, "dot")
-                    ET.SubElement(n_el, "stem").text = "up"
-                    ET.SubElement(n_el, "notehead").text = nhead
+            upper = hits.intersection({"hihat", "crash"})
+            lower = hits.intersection({"kick", "snare", "tom"})
+            if upper:
+                cymbals[position] = upper
+            if lower:
+                kit[position] = lower
+            position += dur_steps
+
+        if cymbals:
+            append_voice(measure, cymbals, 1, "up")
+            if kit:
+                backup = ET.SubElement(measure, "backup")
+                ET.SubElement(backup, "duration").text = "16"
+                append_voice(measure, kit, 2, "down")
+        else:
+            append_voice(measure, kit, 1, "down")
 
     rough = ET.tostring(score, encoding="utf-8")
     parsed = minidom.parseString(rough)

@@ -286,6 +286,10 @@
 </div>
 
 <script>
+  // Use direct scrolls on touch screens so automatic movement doesn't compete with taps in the player.
+  const scoreScrollBehavior = navigator.maxTouchPoints > 0 || matchMedia('(prefers-reduced-motion: reduce)').matches
+    ? 'auto'
+    : 'smooth';
   const tabButtons = document.querySelectorAll('.tab-btn');
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -675,7 +679,7 @@
       document.getElementById('downloadLinks').innerHTML = `
         <a class="btn" href="${xmlBlobUrl}" download="${localRec.title}.musicxml">📄 Baixar MusicXML</a>
       `;
-      document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('scoreCard').scrollIntoView({ behavior: scoreScrollBehavior });
       return;
     }
 
@@ -700,7 +704,7 @@
       document.getElementById('downloadLinks').innerHTML = `
         <a class="btn" href="${xmlUrl}" download="${m.title}.musicxml">📄 Baixar MusicXML</a>
       `;
-      document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('scoreCard').scrollIntoView({ behavior: scoreScrollBehavior });
 
       return;
     }
@@ -725,7 +729,7 @@
         <a class="btn" href="${xmlUrl}" download>📄 Baixar MusicXML</a>
         ${m.zip ? `<a class="btn btn-accent" href="${apiUrl(`/api/library/${id}/${m.zip}`)}" download>📦 Baixar Kit WAV + MIDI (.zip)</a>` : ''}
       `;
-      document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('scoreCard').scrollIntoView({ behavior: scoreScrollBehavior });
 
     }
   };
@@ -866,7 +870,7 @@
       lastGridBar = index;
     }
     if (autoScroll && (centerCursor || (active !== previous && active.card.offsetTop !== previous?.card.offsetTop))) {
-      active.card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      active.card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: scoreScrollBehavior });
     }
     const fraction = Math.max(0, Math.min(1, (scoreTime - index * secondsPerBar) / secondsPerBar));
     const x = gridRender.firstX + fraction * gridRender.step * 16;
@@ -940,7 +944,7 @@
     scorePlayhead.style.height = `${line.h}px`;
     scorePlayhead.classList.remove('hidden');
     if (shouldScroll && (centerCursor || (barIndex !== lastCursorBar && line.y !== lastCursorLineY))) {
-      scorePlayhead.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      scorePlayhead.scrollIntoView({ block: 'center', inline: 'nearest', behavior: scoreScrollBehavior });
     }
     lastCursorBar = barIndex;
     lastCursorLineY = line.y;
@@ -1135,15 +1139,19 @@
   followScoreBtn.setAttribute('aria-pressed', String(followScore));
   followScoreBtn.addEventListener('click', () => {
     followScore = !followScore;
-    localStorage.setItem('drumscribe_follow_score', followScore ? 'on' : 'off');
     followScoreBtn.setAttribute('aria-pressed', String(followScore));
     if (followScore) {
       updateScorePlayhead(true, true);
-    } else {
-      // Cancel any smooth scroll that started before the toggle.
-      window.scrollTo({ top: window.scrollY, left: window.scrollX, behavior: 'instant' });
+    } else if (scoreScrollBehavior === 'smooth') {
+      // The numeric form also works in browsers without the instant behavior option.
+      window.scrollTo(window.scrollX, window.scrollY);
       const staff = document.getElementById('alphaTabContainer');
-      if (scoreViewSelect.value === 'staff') staff.scrollTo({ left: staff.scrollLeft, behavior: 'instant' });
+      if (scoreViewSelect.value === 'staff') staff.scrollLeft = staff.scrollLeft;
+    }
+    try {
+      localStorage.setItem('drumscribe_follow_score', followScore ? 'on' : 'off');
+    } catch {
+      // The toggle remains usable when the browser refuses to save the preference.
     }
   });
 

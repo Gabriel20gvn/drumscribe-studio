@@ -310,7 +310,7 @@ input[type="range"] { width: 100%; min-width: 0; margin: 0; accent-color: var(--
 .transport-controls { display: flex; align-items: center; gap: 6px; }
 #playPauseBtn { min-width: 90px; min-height: 44px; }
 #stopBtn { width: 44px; min-height: 44px; padding: 0; }
-#followScoreBtn { min-height: 44px; white-space: nowrap; }
+#followScoreBtn { min-height: 44px; white-space: nowrap; touch-action: manipulation; }
 #followScoreBtn[aria-pressed="true"] { color: var(--primary); }
 .follow-switch {
   width: 23px;
@@ -395,7 +395,7 @@ body.reading-mode #scoreCard { margin: 0; }
   .drum-grid-card { padding: 5px 3px 1px; }
   .drum-grid-heading { margin-bottom: 1px; }
   .transport-inner { padding: 4px 8px; gap: 7px; }
-  #playPauseBtn, #stopBtn, #followScoreBtn { min-height: 36px; }
+  #playPauseBtn, #stopBtn { min-height: 36px; }
 }
 @media (orientation: landscape) and (max-height: 550px) and (max-width: 700px) {
   .score-heading { display: none; }

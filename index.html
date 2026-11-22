@@ -9,6 +9,7 @@
   <link rel="icon" href="./icons/icon-192.png" />
   <script src="./vendor/alphatab/alphaTab.min.js"></script>
   <script src="./score-format.js"></script>
+  <script src="./drum-grid.js"></script>
   <style>
     :root {
       --bg: #0f172a;
@@ -289,6 +290,34 @@
       gap: 8px;
       margin-bottom: 10px;
     }
+    .score-view-controls { display: inline-flex; align-items: center; gap: 5px; }
+    #drumGridContainer { display: grid; gap: 12px; }
+    .drum-grid-card {
+      overflow-x: auto;
+      background: #242a25;
+      border: 1px solid #485447;
+      border-radius: 10px;
+      padding: 10px 8px 5px;
+      scroll-margin-top: 18px;
+    }
+    .drum-grid-heading { display: flex; gap: 12px; align-items: baseline; color: #d1dccd; font-size: .8rem; margin: 0 0 5px 7px; }
+    .drum-grid-heading span { font-style: italic; overflow-wrap: anywhere; }
+    .drum-grid-svg { display: block; width: 100%; height: auto; }
+    .grid-beat { fill: #262d27; }
+    .grid-beat-alt { fill: #2c332d; }
+    .grid-beat-line { stroke: #485449; stroke-width: 1; }
+    .grid-lane-line { stroke: #687668; stroke-width: .7; stroke-dasharray: 3 5; }
+    .grid-count, .grid-hit, .grid-label text { text-anchor: middle; dominant-baseline: middle; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .grid-count { fill: #b1c0aa; font-size: 14px; }
+    .grid-main-count { fill: #f4f6ed; font-weight: bold; }
+    .grid-hit { fill: #f2f4e9; font-size: 18px; font-weight: bold; }
+    .grid-ghost { font-size: 14px; fill: #c0cec0; }
+    .grid-label rect { fill: #252c25; stroke: #4b5a4c; }
+    .grid-label text { fill: #7d917d; font-size: 13px; }
+    .grid-has-hits rect { stroke: #bca456; }
+    .grid-has-hits text { fill: #e8d394; }
+    .grid-playhead { stroke: #fb7185; stroke-width: 3; opacity: 0; pointer-events: none; }
+    .drum-grid-card.grid-current .grid-playhead { opacity: 1; }
     #alphaTabContainer {
       position: relative;
       background: #ffffff;
@@ -544,14 +573,21 @@
         <span id="songMetaDisplay" style="font-size:0.8rem; color:var(--muted); margin-left:8px;"></span>
       </div>
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <label for="barsPerRowSelect" style="margin:0; font-size:0.8rem;">Compassos/linha</label>
+        <label class="score-view-controls" for="scoreViewSelect">Visualização
+          <select id="scoreViewSelect" style="width:auto; padding:6px;">
+            <option value="staff">Partitura</option>
+            <option value="grid">Grade</option>
+          </select>
+        </label>
+        <label class="score-view-controls staff-only" for="barsPerRowSelect">Compassos/linha
         <select id="barsPerRowSelect" style="width:60px; padding:6px;">
           <option value="1">1</option>
           <option value="2" selected>2</option>
           <option value="4">4</option>
         </select>
-        <button id="zoomOutBtn" class="btn" type="button" title="Diminuir zoom">🔍−</button>
-        <button id="zoomInBtn" class="btn" type="button" title="Aumentar zoom">🔍+</button>
+        </label>
+        <button id="zoomOutBtn" class="btn staff-only" type="button" title="Diminuir zoom">🔍−</button>
+        <button id="zoomInBtn" class="btn staff-only" type="button" title="Aumentar zoom">🔍+</button>
         <label style="margin:0;">Velocidade: <span id="speedVal">100%</span></label>
         <input type="range" id="speedSlider" min="0.5" max="1.25" step="0.05" value="1.0" style="width:100px;" />
         <button id="exitReadingBtn" class="btn hidden">Sair Leitura</button>
@@ -570,6 +606,7 @@
         Escolha uma música na <strong>📚 Biblioteca</strong> acima ou gere uma nova na aba <strong>🎬 Gerar Partitura</strong>.
       </p>
     </div>
+    <div id="drumGridContainer" class="hidden"><p>Escolha uma música na Biblioteca ou gere uma partitura para ver a grade.</p></div>
   </div>
 </div>
 
@@ -1060,6 +1097,47 @@
   let scoreBpm = 120;
   let lastCursorBar = -1;
   let scorePlayhead = null;
+  const scoreViewSelect = document.getElementById('scoreViewSelect');
+  const drumGridContainer = document.getElementById('drumGridContainer');
+  if (localStorage.getItem('drumscribe_score_view') === 'grid') scoreViewSelect.value = 'grid';
+  let gridRender = null;
+  let lastGridBar = -1;
+
+  function setScoreView() {
+    const grid = scoreViewSelect.value === 'grid';
+    document.getElementById('alphaTabContainer').classList.toggle('hidden', grid);
+    drumGridContainer.classList.toggle('hidden', !grid);
+    document.querySelector('.legend-bar').classList.toggle('hidden', grid);
+    document.querySelectorAll('.staff-only').forEach(el => el.classList.toggle('hidden', grid));
+    if (grid) updateGridPlayhead();
+    else if (alphaApi) alphaApi.render();
+  }
+  scoreViewSelect.addEventListener('change', () => {
+    localStorage.setItem('drumscribe_score_view', scoreViewSelect.value);
+    setScoreView();
+  });
+  setScoreView();
+
+  function updateGridPlayhead(autoScroll = false) {
+    if (scoreViewSelect.value !== 'grid' || !gridRender) return;
+    const master = getMasterTrack();
+    if (!master) return;
+    const secondsPerBar = 240 / (scoreBpm || 120);
+    const scoreTime = Math.max(0, master.currentTime - scoreAudioOffset);
+    const index = Math.min(gridRender.cards.length - 1, Math.floor(scoreTime / secondsPerBar));
+    const active = gridRender.cards[index];
+    if (!active) return;
+    if (lastGridBar !== index) {
+      drumGridContainer.querySelector('.grid-current')?.classList.remove('grid-current');
+      active.card.classList.add('grid-current');
+      if (autoScroll && isPlaying) active.card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      lastGridBar = index;
+    }
+    const fraction = Math.max(0, Math.min(1, (scoreTime - index * secondsPerBar) / secondsPerBar));
+    const x = gridRender.firstX + fraction * gridRender.step * 16;
+    active.cursor.setAttribute('x1', x);
+    active.cursor.setAttribute('x2', x);
+  }
 
   function timingFromXml(buffer) {
     try {
@@ -1075,6 +1153,7 @@
   }
 
   function updateScorePlayhead(autoScroll = false) {
+    if (scoreViewSelect.value === 'grid') { updateGridPlayhead(autoScroll); return; }
     const master = getMasterTrack();
     const lookup = alphaApi && alphaApi.boundsLookup;
     const bars = alphaApi && alphaApi.score && alphaApi.score.masterBars;
@@ -1139,6 +1218,11 @@
   function loadScoreIntoAlphaTab(urlOrBuffer, bpm = 0, audioOffset = 0) {
     const container = document.getElementById('alphaTabContainer');
     container.innerHTML = '';
+    drumGridContainer.replaceChildren();
+    gridRender = null;
+    lastGridBar = -1;
+    container.classList.remove('hidden');
+    drumGridContainer.classList.add('hidden');
     if (alphaApi) { alphaApi.destroy(); alphaApi = null; }
     const embeddedTiming = urlOrBuffer instanceof Uint8Array ? timingFromXml(urlOrBuffer) : { bpm: 0, offset: 0 };
     scoreBpm = Number(bpm) || embeddedTiming.bpm;
@@ -1178,11 +1262,23 @@
         container.appendChild(scorePlayhead);
       }
       updateScorePlayhead();
+      if (scoreViewSelect.value === 'grid') setScoreView();
     });
 
     const api = alphaApi;
+    function loadBuffer(buffer) {
+      if (api !== alphaApi) return;
+      const formatted = formatGeneratedDrumScore(buffer);
+      const bars = parseDrumGrid(formatted);
+      if (bars) gridRender = renderDrumGrid(drumGridContainer, bars);
+      else drumGridContainer.innerHTML = '<p class="card">A visualização em grade está disponível para partituras MusicXML de bateria em 4/4.</p>';
+      const embedded = timingFromXml(formatted);
+      if (!scoreBpm) scoreBpm = embedded.bpm || 120;
+      if (!scoreAudioOffset) scoreAudioOffset = embedded.offset;
+      api.load(formatted);
+    }
     if (urlOrBuffer instanceof Uint8Array) {
-      api.load(formatGeneratedDrumScore(urlOrBuffer));
+      loadBuffer(urlOrBuffer);
     } else {
       fetch(urlOrBuffer)
         .then(response => {
@@ -1190,9 +1286,14 @@
           return response.arrayBuffer();
         })
         .then(buffer => {
-          if (api === alphaApi) api.load(formatGeneratedDrumScore(new Uint8Array(buffer)));
+          loadBuffer(new Uint8Array(buffer));
         })
-        .catch(() => { if (api === alphaApi) api.load(urlOrBuffer); });
+        .catch(() => {
+          if (api === alphaApi) {
+            drumGridContainer.innerHTML = '<p class="card">A grade exige o arquivo MusicXML. Tente abrir a música novamente.</p>';
+            api.load(urlOrBuffer);
+          }
+        });
     }
   }
 
@@ -1276,6 +1377,7 @@
     seekSlider.value = 0;
     timeCurrent.textContent = '00:00';
     lastCursorBar = -1;
+    lastGridBar = -1;
     updateScorePlayhead();
   }
 

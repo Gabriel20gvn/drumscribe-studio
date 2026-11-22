@@ -28,6 +28,8 @@ O cursor da partitura segue o áudio usando o BPM estimado e o início do primei
 
 No estúdio, a partitura abre com **2 compassos por linha**. O seletor discreto **Compassos/linha** permite escolher 1, 2 ou 4 e guarda a preferência no navegador. As partituras antigas recebem a divisão em vozes na exibição; as novas também são salvas assim no MusicXML. Os golpes e seus instantes não são alterados pela formatação.
 
+O seletor **Visualização** alterna entre **Partitura** e **Grade**. A grade mostra bumbo, caixa, chimbal, pratos e tons em linhas com a contagem `1 e + a`, traz a letra sobre cada compasso e acompanha o áudio com uma linha rosa. Usa os mesmos golpes do MusicXML, inclusive as possíveis notas fantasmas da caixa, sem gerar uma análise nova. A preferência fica salva no navegador e funciona offline para músicas já salvas no celular. A grade exige MusicXML de bateria em 4/4; MIDI/GP importado continua disponível na partitura tradicional.
+
 As caixas detectadas com intensidade muito menor que as caixas próximas são marcadas com **parênteses** na partitura como possíveis notas fantasmas. O ADTOF detecta o golpe de caixa; a classificação de intensidade usa o áudio separado pelo Demucs. É uma estimativa: pratos ou outros sons simultâneos podem esconder uma nota fantasma, e golpes fracos detectados incorretamente podem receber a marcação. Partituras já salvas precisam ser geradas novamente para receber essa notação.
 
 O modelo ADTOF foi apresentado por Zehren, Alunno e Bientinesi e distribuído sob licença CC BY-NC-SA 4.0 no projeto original. A integração usa o port PyTorch de `xavriley/ADTOF-pytorch`.

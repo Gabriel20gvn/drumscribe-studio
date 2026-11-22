@@ -273,6 +273,9 @@
     <div class="transport-controls">
       <button id="playPauseBtn" class="btn btn-primary" type="button" disabled><span class="play-icon" aria-hidden="true"></span><span id="playPauseLabel">Tocar</span></button>
       <button id="stopBtn" class="btn" type="button" title="Parar" aria-label="Parar" disabled><span class="stop-icon" aria-hidden="true"></span></button>
+      <button id="followScoreBtn" class="btn" type="button" aria-pressed="true" title="Seguir partitura durante a reprodução">
+        <span class="follow-switch" aria-hidden="true"></span>Seguir partitura
+      </button>
     </div>
     <div class="timeline-box">
       <span id="timeCurrent">00:00</span>
@@ -824,6 +827,7 @@
   let lastCursorBar = -1;
   let lastCursorLineY = null;
   let scorePlayhead = null;
+  let followScore = localStorage.getItem('drumscribe_follow_score') !== 'off';
   const barGeometryCache = new Map();
   const scoreViewSelect = document.getElementById('scoreViewSelect');
   const drumGridContainer = document.getElementById('drumGridContainer');
@@ -846,7 +850,7 @@
   });
   setScoreView();
 
-  function updateGridPlayhead(autoScroll = false) {
+  function updateGridPlayhead(autoScroll = false, centerCursor = false) {
     if (scoreViewSelect.value !== 'grid' || !gridRender) return;
     const master = getMasterTrack();
     if (!master) return;
@@ -855,13 +859,14 @@
     const index = Math.min(gridRender.cards.length - 1, Math.floor(scoreTime / secondsPerBar));
     const active = gridRender.cards[index];
     if (!active) return;
+    const previous = gridRender.cards[lastGridBar];
     if (lastGridBar !== index) {
       drumGridContainer.querySelector('.grid-current')?.classList.remove('grid-current');
       active.card.classList.add('grid-current');
-      if (autoScroll && (lastGridBar < 0 || active.card.offsetTop !== gridRender.cards[lastGridBar].card.offsetTop)) {
-        active.card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
-      }
       lastGridBar = index;
+    }
+    if (autoScroll && (centerCursor || (active !== previous && active.card.offsetTop !== previous?.card.offsetTop))) {
+      active.card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
     }
     const fraction = Math.max(0, Math.min(1, (scoreTime - index * secondsPerBar) / secondsPerBar));
     const x = gridRender.firstX + fraction * gridRender.step * 16;
@@ -882,8 +887,9 @@
     } catch (_) { return { bpm: 0, offset: 0 }; }
   }
 
-  function updateScorePlayhead(autoScroll = false) {
-    if (scoreViewSelect.value === 'grid') { updateGridPlayhead(autoScroll); return; }
+  function updateScorePlayhead(autoScroll = false, centerCursor = false) {
+    const shouldScroll = autoScroll && followScore;
+    if (scoreViewSelect.value === 'grid') { updateGridPlayhead(shouldScroll, centerCursor); return; }
     const master = getMasterTrack();
     const lookup = alphaApi && alphaApi.boundsLookup;
     const bars = alphaApi && alphaApi.score && alphaApi.score.masterBars;
@@ -933,7 +939,7 @@
     scorePlayhead.style.transform = `translate3d(${x + geometry.surfaceX}px, ${line.y + geometry.surfaceY}px, 0)`;
     scorePlayhead.style.height = `${line.h}px`;
     scorePlayhead.classList.remove('hidden');
-    if (autoScroll && barIndex !== lastCursorBar && line.y !== lastCursorLineY) {
+    if (shouldScroll && (centerCursor || (barIndex !== lastCursorBar && line.y !== lastCursorLineY))) {
       scorePlayhead.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
     }
     lastCursorBar = barIndex;
@@ -1111,6 +1117,7 @@
   const playPauseBtn = document.getElementById('playPauseBtn');
   const playPauseLabel = document.getElementById('playPauseLabel');
   const stopBtn = document.getElementById('stopBtn');
+  const followScoreBtn = document.getElementById('followScoreBtn');
   const seekSlider = document.getElementById('seekSlider');
   const speedSlider = document.getElementById('speedSlider');
   const speedVal = document.getElementById('speedVal');
@@ -1124,6 +1131,21 @@
 
   let isPlaying = false;
   let cursorFrame = null;
+
+  followScoreBtn.setAttribute('aria-pressed', String(followScore));
+  followScoreBtn.addEventListener('click', () => {
+    followScore = !followScore;
+    localStorage.setItem('drumscribe_follow_score', followScore ? 'on' : 'off');
+    followScoreBtn.setAttribute('aria-pressed', String(followScore));
+    if (followScore) {
+      updateScorePlayhead(true, true);
+    } else {
+      // Cancel any smooth scroll that started before the toggle.
+      window.scrollTo({ top: window.scrollY, left: window.scrollX, behavior: 'instant' });
+      const staff = document.getElementById('alphaTabContainer');
+      if (scoreViewSelect.value === 'staff') staff.scrollTo({ left: staff.scrollLeft, behavior: 'instant' });
+    }
+  });
 
   function updateTransportAvailability() {
     const master = getMasterTrack();

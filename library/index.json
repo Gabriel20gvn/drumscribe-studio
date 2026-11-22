@@ -11,18 +11,5 @@
       "no_drums": "library/1795288574_ce3dce/no_drums.mp3",
       "vocals": "library/1795288574_ce3dce/vocals.mp3"
     }
-  },
-  {
-    "id": "1795282406_0ad79a",
-    "title": "ANGRA plays “BURN” in Japan!  Drum Cam — Full Metal Japan 2026",
-    "bpm": 99,
-    "measures": 165,
-    "created_at": 1795282407.5317578,
-    "musicxml": "library/1795282406_0ad79a/partitura_bateria.musicxml",
-    "audio_mp3": {
-      "drums": "library/1795282406_0ad79a/drums.mp3",
-      "no_drums": "library/1795282406_0ad79a/no_drums.mp3",
-      "vocals": "library/1795282406_0ad79a/vocals.mp3"
-    }
   }
 ]

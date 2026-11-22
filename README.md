@@ -26,7 +26,7 @@ O BPM é refinado pela média dos intervalos entre batidas detectadas. Isso evit
 
 O cursor da partitura segue o áudio usando o BPM estimado e o início do primeiro compasso salvo com a nova transcrição. Em arquivos antigos ou MIDI importado, o cursor parte do início do áudio; nesses casos, a posição pode não coincidir com a gravação.
 
-No estúdio, a partitura abre com **2 compassos por linha**. O seletor discreto **Compassos/linha** permite escolher 1, 2 ou 4 e guarda a preferência no navegador. As partituras antigas recebem a divisão em vozes na exibição; as novas também são salvas assim no MusicXML. Os golpes e seus instantes não são alterados pela formatação.
+No estúdio, **Compassos/linha: Auto** mostra 2 compassos por linha com o celular em pé e 4 quando ele é girado para a horizontal. Também é possível fixar 1, 2 ou 4 compassos; a escolha fica guardada no navegador. Ao girar o celular, a partitura é redesenhada na nova largura. Na horizontal, o app libera a tela para a leitura, compacta os controles e mostra duas grades por linha. As partituras antigas recebem a divisão em vozes na exibição; as novas também são salvas assim no MusicXML. Os golpes e seus instantes não são alterados pela formatação.
 
 O seletor **Visualização** alterna entre **Partitura** e **Grade**. A grade mostra bumbo, caixa, chimbal, pratos e tons em linhas com a contagem `1 e + a`, traz a letra sobre cada compasso e acompanha o áudio com uma linha rosa. Usa os mesmos golpes do MusicXML, inclusive as possíveis notas fantasmas da caixa, sem gerar uma análise nova. A preferência fica salva no navegador e funciona offline para músicas já salvas no celular. A grade exige MusicXML de bateria em 4/4; MIDI/GP importado continua disponível na partitura tradicional.
 

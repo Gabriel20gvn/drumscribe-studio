@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DrumScribe Studio — Partituras de Bateria &amp; Stems</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="./manifest.webmanifest" />
@@ -350,8 +350,45 @@
     }
 
     body.reading-mode header,
-    body.reading-mode .setup-section { display: none !important; }
+    body.reading-mode .setup-section,
+    body.reading-mode .mixer-card { display: none !important; }
     body.reading-mode .container { max-width: 100%; margin: 0; padding: 4px; }
+
+    @media (orientation: landscape) and (max-height: 550px) and (max-width: 1000px) {
+      body.has-score header,
+      body.has-score .setup-section,
+      body.has-score .mixer-card,
+      body.has-score .legend-bar { display: none !important; }
+      body.has-score { padding-bottom: 58px; }
+      body.has-score .container { max-width: none; margin: 0; padding: 0 4px; }
+      body.has-score #scoreCard { margin: 0; padding: 4px; }
+      body.has-score .score-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--surface);
+        margin-bottom: 4px;
+        padding: 3px 4px;
+        gap: 4px;
+      }
+      body.has-score #songTitleDisplay { display: block; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .8rem; }
+      body.has-score #songMetaDisplay { display: none; }
+      body.has-score .score-toolbar label { font-size: .74rem; }
+      body.has-score .score-toolbar select { padding: 4px !important; }
+      body.has-score .score-toolbar .btn { padding: 4px 7px; }
+      body.has-score #exitReadingBtn { display: none !important; }
+      body.has-score #speedSlider { width: 75px !important; }
+      body.has-score #alphaTabContainer { padding: 4px; min-height: 0; }
+      body.has-score #drumGridContainer { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+      body.has-score .drum-grid-card { padding: 5px 3px 1px; }
+      body.has-score .drum-grid-heading { margin-bottom: 1px; }
+      body.has-score .transport-bar { padding: 4px 8px; gap: 6px; }
+      body.has-score .transport-bar .btn { padding: 5px 8px; }
+      body.has-score .timeline-box { min-width: 0; }
+    }
+    @media (orientation: landscape) and (max-height: 550px) and (max-width: 700px) {
+      body.has-score #songTitleDisplay { display: none; }
+    }
 
     .transport-bar {
       position: fixed;
@@ -523,7 +560,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card mixer-card">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <strong style="font-size:0.95rem;">🎛️ Mixer de Estudo (Stems Sincronizados)</strong>
         <div id="downloadLinks" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
@@ -581,8 +618,9 @@
         </label>
         <label class="score-view-controls staff-only" for="barsPerRowSelect">Compassos/linha
         <select id="barsPerRowSelect" style="width:60px; padding:6px;">
+          <option value="auto" selected>Auto</option>
           <option value="1">1</option>
-          <option value="2" selected>2</option>
+          <option value="2">2</option>
           <option value="4">4</option>
         </select>
         </label>
@@ -1091,8 +1129,31 @@
   let alphaApi = null;
   let scoreScale = window.innerWidth < 600 ? 0.85 : 1.0;
   const barsPerRowSelect = document.getElementById('barsPerRowSelect');
-  const savedBarsPerRow = Number(localStorage.getItem('drumscribe_bars_per_row'));
-  if ([1, 2, 4].includes(savedBarsPerRow)) barsPerRowSelect.value = String(savedBarsPerRow);
+  const savedBarsPerRow = localStorage.getItem('drumscribe_bars_per_row');
+  // The old default was 2; use the responsive choice until the reader picks a fixed value.
+  if (savedBarsPerRow === '1' || savedBarsPerRow === '4') barsPerRowSelect.value = savedBarsPerRow;
+  const isPhoneLandscape = () => window.innerWidth > window.innerHeight && window.innerHeight <= 550 && window.innerWidth <= 1000;
+  const effectiveBarsPerRow = () => barsPerRowSelect.value === 'auto'
+    ? (isPhoneLandscape() ? 4 : 2)
+    : Number(barsPerRowSelect.value);
+  function applyScoreLayout(forceRender = false) {
+    if (!alphaApi) return;
+    const bars = effectiveBarsPerRow();
+    const changed = alphaApi.settings.display.barsPerRow !== bars;
+    alphaApi.settings.display.barsPerRow = bars;
+    if (changed) alphaApi.updateSettings();
+    if ((changed || forceRender) && scoreViewSelect.value === 'staff') alphaApi.render();
+  }
+  let resizeTimer = null;
+  let lastScoreViewportWidth = window.innerWidth;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (Math.abs(window.innerWidth - lastScoreViewportWidth) < 20) return;
+      lastScoreViewportWidth = window.innerWidth;
+      applyScoreLayout(true);
+    }, 180);
+  });
   let scoreAudioOffset = 0;
   let scoreBpm = 120;
   let lastCursorBar = -1;
@@ -1110,7 +1171,7 @@
     document.querySelector('.legend-bar').classList.toggle('hidden', grid);
     document.querySelectorAll('.staff-only').forEach(el => el.classList.toggle('hidden', grid));
     if (grid) updateGridPlayhead();
-    else if (alphaApi) alphaApi.render();
+    else if (alphaApi) applyScoreLayout(true);
   }
   scoreViewSelect.addEventListener('change', () => {
     localStorage.setItem('drumscribe_score_view', scoreViewSelect.value);
@@ -1208,11 +1269,7 @@
   });
   barsPerRowSelect.addEventListener('change', () => {
     localStorage.setItem('drumscribe_bars_per_row', barsPerRowSelect.value);
-    if (alphaApi) {
-      alphaApi.settings.display.barsPerRow = Number(barsPerRowSelect.value);
-      alphaApi.updateSettings();
-      alphaApi.render();
-    }
+    applyScoreLayout(true);
   });
 
   function loadScoreIntoAlphaTab(urlOrBuffer, bpm = 0, audioOffset = 0) {
@@ -1233,6 +1290,7 @@
       container.innerHTML = '<p style="padding:20px;color:#b91c1c;">Biblioteca visual AlphaTab ainda carregando. Aguarde 2 segundos e tente abrir novamente.</p>';
       return;
     }
+    document.body.classList.add('has-score');
 
     alphaApi = new alphaTab.AlphaTabApi(container, {
       core: {
@@ -1245,7 +1303,7 @@
         layoutMode: alphaTab.LayoutMode.Page,
         staveProfile: alphaTab.StaveProfile.Score,
         scale: scoreScale,
-        barsPerRow: Number(barsPerRowSelect.value)
+        barsPerRow: effectiveBarsPerRow()
       },
       player: { enablePlayer: false }
     });

@@ -289,12 +289,23 @@
       margin-bottom: 10px;
     }
     #alphaTabContainer {
+      position: relative;
       background: #ffffff;
       color: #000000;
       border-radius: 10px;
       padding: 12px;
       min-height: 420px;
       overflow-x: auto;
+    }
+    .score-playhead {
+      position: absolute;
+      z-index: 5;
+      width: 3px;
+      min-height: 36px;
+      background: #ef4444;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.16);
+      border-radius: 3px;
+      pointer-events: none;
     }
     .legend-bar {
       display: flex;
@@ -713,6 +724,7 @@
       title: meta.title,
       bpm: meta.bpm,
       measures: meta.measures,
+      audio_offset_seconds: meta.audio_offset_seconds || 0,
       created_at: meta.created_at || Date.now() / 1000,
       xmlBuffer: await xmlResp.arrayBuffer(),
       drumsBlob: drumsResp ? await drumsResp.blob() : null,
@@ -899,7 +911,7 @@
     if (localRec && localRec.xmlBuffer) {
       document.getElementById('songTitleDisplay').textContent = localRec.title;
       document.getElementById('songMetaDisplay').textContent = `• ${localRec.bpm} BPM • ${localRec.measures} compassos`;
-      loadScoreIntoAlphaTab(new Uint8Array(localRec.xmlBuffer));
+      loadScoreIntoAlphaTab(new Uint8Array(localRec.xmlBuffer), localRec.bpm, localRec.audio_offset_seconds);
 
       resetTracks();
       if (localRec.drumsBlob) setTrackSource('drums', URL.createObjectURL(localRec.drumsBlob));
@@ -926,7 +938,7 @@
 
       document.getElementById('songTitleDisplay').textContent = m.title;
       document.getElementById('songMetaDisplay').textContent = `• ${m.bpm} BPM • ${m.measures} compassos`;
-      loadScoreIntoAlphaTab(xmlUrl);
+      loadScoreIntoAlphaTab(xmlUrl, m.bpm, m.audio_offset_seconds);
 
       resetTracks();
       if (drumsUrl) setTrackSource('drums', drumsUrl);
@@ -950,7 +962,7 @@
 
       document.getElementById('songTitleDisplay').textContent = m.title;
       document.getElementById('songMetaDisplay').textContent = `• ${m.bpm} BPM • ${m.measures} compassos`;
-      loadScoreIntoAlphaTab(xmlUrl);
+      loadScoreIntoAlphaTab(xmlUrl, m.bpm, m.audio_offset_seconds);
 
       resetTracks();
       if (drumsUrl) setTrackSource('drums', drumsUrl);
@@ -1029,6 +1041,68 @@
 
   let alphaApi = null;
   let scoreScale = 1.0;
+  let scoreAudioOffset = 0;
+  let scoreBpm = 120;
+  let lastCursorBar = -1;
+  let scorePlayhead = null;
+
+  function timingFromXml(buffer) {
+    try {
+      const xml = new DOMParser().parseFromString(new TextDecoder().decode(buffer), 'application/xml');
+      const bpmNode = xml.getElementsByTagName('per-minute')[0];
+      const offsetNode = [...xml.getElementsByTagName('miscellaneous-field')]
+        .find(node => node.getAttribute('name') === 'drumscribe-audio-offset-seconds');
+      return {
+        bpm: Number(bpmNode && bpmNode.textContent) || 0,
+        offset: Number(offsetNode && offsetNode.textContent) || 0
+      };
+    } catch (_) { return { bpm: 0, offset: 0 }; }
+  }
+
+  function updateScorePlayhead(autoScroll = false) {
+    const master = getMasterTrack();
+    const lookup = alphaApi && alphaApi.boundsLookup;
+    const bars = alphaApi && alphaApi.score && alphaApi.score.masterBars;
+    if (!master || !lookup || !bars || !bars.length || !scorePlayhead) return;
+
+    const bpm = scoreBpm > 0 ? scoreBpm : (alphaApi.score.tempo || 120);
+    const secondsPerBar = 240 / bpm;
+    const scoreTime = Math.max(0, master.currentTime - scoreAudioOffset);
+    const barIndex = Math.min(bars.length - 1, Math.floor(scoreTime / secondsPerBar));
+    const barBounds = lookup.findMasterBarByIndex(barIndex);
+    if (!barBounds) return;
+
+    const line = barBounds.lineAlignedBounds || barBounds.visualBounds;
+    const localTime = Math.max(0, scoreTime - barIndex * secondsPerBar);
+    const totalTicks = bars[barIndex].calculateDuration() || 3840;
+    const targetTick = localTime / secondsPerBar * totalTicks;
+    const beatBounds = (barBounds.bars[0] && barBounds.bars[0].beats || [])
+      .filter(b => b.beat && Number.isFinite(b.beat.playbackStart))
+      .sort((a, b) => a.beat.playbackStart - b.beat.playbackStart);
+    let x = line.x + line.w * Math.min(1, localTime / secondsPerBar);
+    if (beatBounds.length) {
+      const nextIndex = beatBounds.findIndex(b => b.beat.playbackStart > targetTick);
+      const left = nextIndex <= 0 ? beatBounds[0] : beatBounds[nextIndex - 1];
+      const right = nextIndex < 0 ? null : beatBounds[nextIndex];
+      if (right && right.beat.playbackStart > left.beat.playbackStart) {
+        const fraction = (targetTick - left.beat.playbackStart) /
+          (right.beat.playbackStart - left.beat.playbackStart);
+        x = left.onNotesX + (right.onNotesX - left.onNotesX) * Math.max(0, Math.min(1, fraction));
+      } else {
+        x = left.onNotesX;
+        if (!right) x += (line.x + line.w - x) * Math.max(0, Math.min(1,
+          (targetTick - left.beat.playbackStart) / Math.max(1, totalTicks - left.beat.playbackStart)));
+      }
+    }
+    scorePlayhead.style.left = `${x}px`;
+    scorePlayhead.style.top = `${line.y}px`;
+    scorePlayhead.style.height = `${line.h}px`;
+    scorePlayhead.classList.remove('hidden');
+    if (autoScroll && isPlaying && barIndex !== lastCursorBar) {
+      scorePlayhead.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+    }
+    lastCursorBar = barIndex;
+  }
 
   document.getElementById('zoomInBtn').addEventListener('click', () => {
     scoreScale = Math.min(1.6, +(scoreScale + 0.1).toFixed(1));
@@ -1039,10 +1113,15 @@
     if (alphaApi) { alphaApi.settings.display.scale = scoreScale; alphaApi.updateSettings(); alphaApi.render(); }
   });
 
-  function loadScoreIntoAlphaTab(urlOrBuffer) {
+  function loadScoreIntoAlphaTab(urlOrBuffer, bpm = 0, audioOffset = 0) {
     const container = document.getElementById('alphaTabContainer');
     container.innerHTML = '';
     if (alphaApi) { alphaApi.destroy(); alphaApi = null; }
+    const embeddedTiming = urlOrBuffer instanceof Uint8Array ? timingFromXml(urlOrBuffer) : { bpm: 0, offset: 0 };
+    scoreBpm = Number(bpm) || embeddedTiming.bpm;
+    scoreAudioOffset = Number(audioOffset) || embeddedTiming.offset;
+    scorePlayhead = null;
+    lastCursorBar = -1;
     if (typeof alphaTab === 'undefined') {
       container.innerHTML = '<p style="padding:20px;color:#b91c1c;">Biblioteca visual AlphaTab ainda carregando. Aguarde 2 segundos e tente abrir novamente.</p>';
       return;
@@ -1065,6 +1144,16 @@
 
     alphaApi.error.on((err) => {
       container.innerHTML = `<p style="padding:20px;color:#b91c1c;">Aviso ao desenhar partitura: ${err && err.message ? err.message : err}</p>`;
+    });
+
+    alphaApi.postRenderFinished.on(() => {
+      if (!scorePlayhead || !scorePlayhead.isConnected) {
+        scorePlayhead = document.createElement('div');
+        scorePlayhead.className = 'score-playhead hidden';
+        scorePlayhead.setAttribute('aria-hidden', 'true');
+        container.appendChild(scorePlayhead);
+      }
+      updateScorePlayhead();
     });
 
     alphaApi.load(urlOrBuffer);
@@ -1149,6 +1238,8 @@
     playPauseBtn.textContent = '▶ Tocar';
     seekSlider.value = 0;
     timeCurrent.textContent = '00:00';
+    lastCursorBar = -1;
+    updateScorePlayhead();
   }
 
   playPauseBtn.addEventListener('click', async () => {
@@ -1184,6 +1275,7 @@
     if (!master || !isFinite(master.duration)) return;
     const targetTime = (parseFloat(seekSlider.value) / 100) * master.duration;
     for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.currentTime = targetTime; }
+    updateScorePlayhead();
   });
 
   setInterval(() => {
@@ -1192,6 +1284,7 @@
     timeCurrent.textContent = formatTime(master.currentTime);
     timeTotal.textContent = formatTime(master.duration);
     seekSlider.value = (master.currentTime / master.duration) * 100;
+    updateScorePlayhead(true);
 
     if (isPlaying) {
       for (const tr of Object.values(tracks)) {
@@ -1267,7 +1360,7 @@
             document.getElementById('songTitleDisplay').textContent = res.title;
             document.getElementById('songMetaDisplay').textContent = `• ${res.bpm} BPM • ${res.measures} compassos`;
 
-            loadScoreIntoAlphaTab(xmlUrl);
+            loadScoreIntoAlphaTab(xmlUrl, res.bpm, res.audio_offset_seconds);
             resetTracks();
             if (drumsUrl) setTrackSource('drums', drumsUrl);
             if (noDrumsUrl) setTrackSource('no_drums', noDrumsUrl);
@@ -1287,6 +1380,7 @@
               title: res.title,
               bpm: res.bpm,
               measures: res.measures,
+              audio_offset_seconds: res.audio_offset_seconds,
               created_at: Date.now() / 1000,
             };
             activeLibraryId = libMeta.id;
@@ -1315,7 +1409,8 @@
 
     const buffer = await xmlFile.arrayBuffer();
     const title = xmlFile.name.replace(/\.[^/.]+$/, '');
-    loadScoreIntoAlphaTab(new Uint8Array(buffer));
+    const timing = timingFromXml(new Uint8Array(buffer));
+    loadScoreIntoAlphaTab(new Uint8Array(buffer), timing.bpm, timing.offset);
     document.getElementById('songTitleDisplay').textContent = title;
     document.getElementById('songMetaDisplay').textContent = '• Arquivo Local';
 
@@ -1328,8 +1423,9 @@
     await dbPutScore({
       id: recId,
       title,
-      bpm: 120,
+      bpm: timing.bpm,
       measures: 0,
+      audio_offset_seconds: timing.offset,
       created_at: Date.now() / 1000,
       xmlBuffer: buffer,
       drumsBlob: drumsFile || null,

@@ -17,10 +17,15 @@ import requests
 import numpy as np
 import soundfile as sf
 import librosa
-from scipy.signal import butter, sosfilt
 import yt_dlp
 import whisper
 from music21 import stream, note, chord, meter, tempo, metadata
+import torch
+from adtof_pytorch import (
+    calculate_n_bins, create_frame_rnn_model, get_default_weights_path,
+    load_pytorch_weights, PeakPicker, FRAME_RNN_THRESHOLDS, LABELS_5,
+)
+from adtof_pytorch.audio import create_adtof_processor
 
 
 def sanitize_filename(name: str) -> str:
@@ -225,49 +230,57 @@ def separate_with_demucs(wav_path: str, job_dir: str, model: str = "htdemucs") -
     return {"wav": stems, "mp3": mp3_stems}
 
 
-def _bandpass_filter(y: np.ndarray, sr: int, low: float, high: float) -> np.ndarray:
-    nyq = 0.5 * sr
-    low_n = max(low / nyq, 1e-4)
-    high_n = min(high / nyq, 0.999)
-    sos = butter(4, [low_n, high_n], btype="band", output="sos")
-    return sosfilt(sos, y)
+def _transcribe_drum_events_adtof(drums_wav: str, job_dir: str) -> Dict[str, List[float]]:
+    """Run the trained five-class model in bounded chunks of the Demucs drum stem."""
+    weights_path = get_default_weights_path()
+    if not weights_path or not os.path.isfile(weights_path):
+        raise RuntimeError("Pesos do ADTOF ausentes. Instale adtof-pytorch no ambiente do Colab.")
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = create_frame_rnn_model(calculate_n_bins())
+    model = load_pytorch_weights(model, weights_path, strict=True)
+    model.eval().to(device)
+    picker = PeakPicker(thresholds=FRAME_RNN_THRESHOLDS, fps=100)
+    processor = create_adtof_processor()
+    pitch_to_piece = {35: "kick", 38: "snare", 47: "tom", 42: "hihat", 49: "crash"}
+    events: Dict[str, List[float]] = {piece: [] for piece in pitch_to_piece.values()}
+    chunk_file = os.path.join(job_dir, "adtof_chunk.wav")
 
-def _highpass_filter(y: np.ndarray, sr: int, cutoff: float) -> np.ndarray:
-    nyq = 0.5 * sr
-    cut_n = min(cutoff / nyq, 0.999)
-    sos = butter(4, cut_n, btype="high", output="sos")
-    return sosfilt(sos, y)
-
-
-def _detect_band_onsets(y_band: np.ndarray, sr: int, delta: float = 0.12) -> tuple[np.ndarray, np.ndarray]:
-    hop_length = 256
-    onset_env = librosa.onset.onset_strength(y=y_band, sr=sr, hop_length=hop_length)
-    if len(onset_env) > 0:
-        ref_val = float(np.percentile(onset_env, 95))
-        if ref_val <= 0:
-            ref_val = float(np.max(onset_env))
-        if ref_val > 0:
-            onset_env = np.clip(onset_env / ref_val, 0.0, 1.5)
-
-    peaks = librosa.onset.onset_detect(
-        onset_envelope=onset_env,
-        sr=sr,
-        hop_length=hop_length,
-        backtrack=False,
-        delta=delta,
-        wait=max(1, int(0.055 * sr / hop_length))
-    )
-    times = librosa.frames_to_time(peaks, sr=sr, hop_length=hop_length)
-    strengths = onset_env[peaks] if len(peaks) > 0 else np.array([])
-    return times, strengths
+    try:
+        with sf.SoundFile(drums_wav) as audio:
+            sr = audio.samplerate
+            chunk_frames = 20 * sr
+            margin_frames = sr
+            for start in range(0, len(audio), chunk_frames):
+                read_start = max(0, start - margin_frames)
+                read_end = min(len(audio), start + chunk_frames + margin_frames)
+                audio.seek(read_start)
+                data = audio.read(read_end - read_start, dtype="float32", always_2d=True)
+                sf.write(chunk_file, data.mean(axis=1), sr, subtype="PCM_16")
+                features = processor.process_audio(chunk_file)
+                with torch.inference_mode():
+                    activations = model(torch.from_numpy(features).unsqueeze(0).to(device)).cpu().numpy()
+                picked = picker.pick(activations, labels=LABELS_5)[0]
+                valid_start = start / sr
+                valid_end = min(len(audio), start + chunk_frames) / sr
+                chunk_offset = read_start / sr
+                for pitch, times in picked.items():
+                    for relative_time in times:
+                        absolute_time = chunk_offset + relative_time
+                        if valid_start <= absolute_time < valid_end:
+                            events[pitch_to_piece[pitch]].append(absolute_time)
+    finally:
+        if os.path.exists(chunk_file):
+            os.remove(chunk_file)
+    return events
 
 
 def _build_drum_musicxml(
     title: str,
     bpm: int,
     measures_events: List[List[tuple[int, set]]],
-    lyrics_by_measure: Dict[int, List[str]]
+    lyrics_by_measure: Dict[int, List[str]],
+    audio_offset_seconds: float = 0.0,
 ) -> str:
     """
     MusicXML 3.1 com numeração MIDI 1-based (GM MIDI + 1):
@@ -280,7 +293,9 @@ def _build_drum_musicxml(
 
     identification = ET.SubElement(score, "identification")
     creator = ET.SubElement(identification, "creator", type="composer")
-    creator.text = "DrumScribe AI (Demucs + Whisper)"
+    creator.text = "DrumScribe AI (Demucs + ADTOF + Whisper)"
+    miscellaneous = ET.SubElement(identification, "miscellaneous")
+    ET.SubElement(miscellaneous, "miscellaneous-field", name="drumscribe-audio-offset-seconds").text = f"{audio_offset_seconds:.3f}"
 
     part_list = ET.SubElement(score, "part-list")
     score_part = ET.SubElement(part_list, "score-part", id="P1")
@@ -392,7 +407,7 @@ def transcribe_drums_and_lyrics(
     progress_cb: Optional[Callable[[int, str], None]] = None
 ) -> Dict[str, Any]:
     if progress_cb:
-        progress_cb(60, "Analisando andamento (BPM) e transientes da bateria...")
+        progress_cb(60, "Analisando andamento (BPM) e golpes de bateria com ADTOF...")
 
     y, sr = librosa.load(drums_wav, sr=22050, mono=True)
     duration_sec = librosa.get_duration(y=y, sr=sr)
@@ -407,23 +422,16 @@ def transcribe_drums_and_lyrics(
     sec_per_16th = sec_per_beat / 4.0
     sec_per_measure = sec_per_beat * 4.0
 
-    y_kick = _bandpass_filter(y, sr, 40.0, 130.0)
-    y_snare = _bandpass_filter(y, sr, 180.0, 2400.0)
-    y_cymbal = _highpass_filter(y, sr, 5500.0)
-
-    kick_times, _ = _detect_band_onsets(y_kick, sr, delta=0.18)
-    snare_times, _ = _detect_band_onsets(y_snare, sr, delta=0.20)
-    cymbal_times, cymbal_strengths = _detect_band_onsets(y_cymbal, sr, delta=0.15)
-
-    all_onsets = np.concatenate([kick_times, snare_times, cymbal_times]) if (
-        len(kick_times) + len(snare_times) + len(cymbal_times) > 0
-    ) else np.array([0.0])
+    drum_events = _transcribe_drum_events_adtof(drums_wav, job_dir)
+    all_onsets = np.array([t for times in drum_events.values() for t in times], dtype=float)
+    if len(all_onsets) == 0:
+        all_onsets = np.array([0.0])
 
     first_hit = float(np.min(all_onsets))
     if len(beat_frames) > 0:
         beat_times = librosa.frames_to_time(beat_frames, sr=sr)
-        valid_beats = beat_times[beat_times >= max(0.0, first_hit - 0.15)]
-        grid_origin = float(valid_beats[0]) if len(valid_beats) > 0 else first_hit
+        prior_beats = beat_times[beat_times <= first_hit + 0.10]
+        grid_origin = float(prior_beats[-1]) if len(prior_beats) > 0 else min(first_hit, float(beat_times[0]))
     else:
         grid_origin = first_hit
 
@@ -433,29 +441,13 @@ def transcribe_drums_and_lyrics(
 
     grid: Dict[int, set] = {}
 
-    for t in kick_times:
-        if t < grid_origin - 0.05:
-            continue
-        step = int(round((t - grid_origin) / sec_per_16th))
-        if 0 <= step < total_steps:
-            grid.setdefault(step, set()).add("kick")
-
-    for t in snare_times:
-        if t < grid_origin - 0.05:
-            continue
-        step = int(round((t - grid_origin) / sec_per_16th))
-        if 0 <= step < total_steps:
-            grid.setdefault(step, set()).add("snare")
-
-    for t, strength in zip(cymbal_times, cymbal_strengths):
-        if t < grid_origin - 0.05:
-            continue
-        step = int(round((t - grid_origin) / sec_per_16th))
-        if 0 <= step < total_steps:
-            if strength > 0.95 and (step % 16 in (0, 8)):
-                grid.setdefault(step, set()).add("crash")
-            else:
-                grid.setdefault(step, set()).add("hihat")
+    for piece, times in drum_events.items():
+        for t in times:
+            if t < grid_origin - 0.05:
+                continue
+            step = int(round((t - grid_origin) / sec_per_16th))
+            if 0 <= step < total_steps:
+                grid.setdefault(step, set()).add(piece)
 
     lyrics_by_measure: Dict[int, list[str]] = {}
     if vocals_wav and os.path.exists(vocals_wav):
@@ -492,7 +484,7 @@ def transcribe_drums_and_lyrics(
     midi_score.insert(0, metadata.Metadata())
     midi_score.metadata.title = title
     midi_part = stream.Part()
-    midi_pitch_map = {"kick": "C2", "snare": "D2", "hihat": "F#2", "crash": "C#3"}
+    midi_pitch_map = {"kick": "B1", "snare": "D2", "tom": "B2", "hihat": "F#2", "crash": "C#3"}
 
     for m_idx in range(total_measures):
         m_midi = stream.Measure(number=m_idx + 1)
@@ -539,7 +531,7 @@ def transcribe_drums_and_lyrics(
 
     midi_score.append(midi_part)
 
-    xml_content = _build_drum_musicxml(title, bpm, measures_events, lyrics_by_measure)
+    xml_content = _build_drum_musicxml(title, bpm, measures_events, lyrics_by_measure, grid_origin)
     xml_path = os.path.join(job_dir, "partitura_bateria.musicxml")
     with open(xml_path, "w", encoding="utf-8") as f:
         f.write(xml_content)
@@ -550,6 +542,7 @@ def transcribe_drums_and_lyrics(
     return {
         "bpm": bpm,
         "measures": total_measures,
+        "audio_offset_seconds": grid_origin,
         "musicxml": "partitura_bateria.musicxml",
         "midi": "partitura_bateria.mid",
     }
@@ -627,6 +620,7 @@ def push_item_to_github_library(
         "title": meta["title"],
         "bpm": meta["bpm"],
         "measures": meta["measures"],
+        "audio_offset_seconds": meta.get("audio_offset_seconds", 0),
         "created_at": meta["created_at"],
         "musicxml": f"library/{item_id}/partitura_bateria.musicxml",
         "audio_mp3": {
@@ -707,6 +701,7 @@ def save_to_library(job_dir: str, result_data: Dict[str, Any], base_dir: str) ->
         "title": result_data["title"],
         "bpm": result_data["bpm"],
         "measures": result_data["measures"],
+        "audio_offset_seconds": result_data.get("audio_offset_seconds", 0),
         "created_at": time.time(),
         "musicxml": result_data["musicxml"],
         "midi": result_data["midi"],
@@ -786,6 +781,7 @@ def process_full_pipeline(
         "title": title,
         "bpm": score_info["bpm"],
         "measures": score_info["measures"],
+        "audio_offset_seconds": score_info["audio_offset_seconds"],
         "musicxml": score_info["musicxml"],
         "midi": score_info["midi"],
         "zip": zip_filename,

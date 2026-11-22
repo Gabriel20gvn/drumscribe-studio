@@ -5,10 +5,25 @@ Aplicação web completa (Frontend + Backend Python) para baixar músicas do You
 ## 📁 Estrutura do Repositório
 
 - `app.py` — Backend FastAPI com fila de processamento em segundo plano e endpoints de download.
-- `processor.py` — Pipeline de áudio (`yt-dlp` → `Demucs` → transcrição de bateria + `Whisper` + `music21`).
-- `static/index.html` — Interface responsiva com renderizador de partitura AlphaTab, mixer Mute/Solo, controle de velocidade, modo leitura e botão *Tela Acesa* para celular.
+- `processor.py` — Pipeline de áudio (`yt-dlp` → `Demucs` → `ADTOF-pytorch` → `Whisper` + `music21`). O ADTOF identifica bumbo, caixa, tom, chimbal e ataque sobre a faixa de bateria separada pelo Demucs.
+- `index.html` — Interface responsiva com renderizador AlphaTab, linha vermelha de acompanhamento, mixer Mute/Solo, controle de velocidade, modo leitura e botão *Tela Acesa* para celular.
+- `drumscribe_colab_backend.ipynb` — Notebook atualizado para instalar o ADTOF e iniciar o servidor no Google Colab.
 - `Dockerfile` — Configuração pronta para deploy gratuito com FFmpeg pré-instalado.
 - `requirements.txt` — Dependências Python.
+
+## 🎧 Gerar novamente com ADTOF no Colab
+
+Abra `drumscribe_colab_backend.ipynb` no Google Colab e execute as duas células, na ordem. A primeira atualiza o código do GitHub e instala o ADTOF; a segunda inicia o servidor e mostra o link do site conectado. Se estiver usando uma cópia antiga do notebook, adicione à primeira célula, após os outros comandos `pip install`:
+
+```python
+!pip install -q "git+https://github.com/xavriley/ADTOF-pytorch.git@85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9"
+```
+
+Execute `!git pull` na pasta `/content/drumscribe-studio` e reinicie a célula do servidor. As partituras já existentes foram geradas pelo método anterior; gere a música outra vez para obter as notas do ADTOF. Mesmo com o novo modelo, a separação da bateria e a transcrição podem cometer erros, especialmente em músicas com instrumentos que vazam para a faixa de bateria.
+
+O cursor da partitura segue o áudio usando o BPM estimado e o início do primeiro compasso salvo com a nova transcrição. Em arquivos antigos ou MIDI importado, o cursor parte do início do áudio; nesses casos, a posição pode não coincidir com a gravação.
+
+O modelo ADTOF foi apresentado por Zehren, Alunno e Bientinesi e distribuído sob licença CC BY-NC-SA 4.0 no projeto original. A integração usa o port PyTorch de `xavriley/ADTOF-pytorch`.
 
 ## 🚀 Como publicar grátis usando seu GitHub (sem precisar de PC)
 

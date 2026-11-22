@@ -11,3 +11,4 @@ numpy>=1.24.0,<2.0.0
 music21>=9.1.0
 torch>=2.1.0
 torchaudio>=2.1.0
+adtof-pytorch @ git+https://github.com/xavriley/ADTOF-pytorch.git@85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9

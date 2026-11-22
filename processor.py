@@ -702,22 +702,7 @@ def push_item_to_github_library(
                     message=f"Add {target_name} for {meta['title']}"
                 )
 
-    index_url = f"https://api.github.com/repos/{github_repo}/contents/library/index.json"
-    headers = {
-        "Authorization": f"Bearer {github_token}",
-        "Accept": "application/vnd.github+json",
-    }
-    catalog: List[Dict[str, Any]] = []
-    get_idx = requests.get(index_url, headers=headers, timeout=20)
-    if get_idx.status_code == 200:
-        try:
-            raw_b64 = get_idx.json().get("content", "")
-            catalog = json.loads(base64.b64decode(raw_b64).decode("utf-8"))
-        except Exception:
-            catalog = []
-
-    catalog = [entry for entry in catalog if entry.get("id") != item_id]
-    catalog.insert(0, {
+    entry = {
         "id": item_id,
         "title": meta["title"],
         "bpm": meta["bpm"],
@@ -730,16 +715,33 @@ def push_item_to_github_library(
             "no_drums": f"library/{item_id}/no_drums.mp3" if meta["audio_mp3"].get("no_drums") else None,
             "vocals": f"library/{item_id}/vocals.mp3" if meta["audio_mp3"].get("vocals") else None,
         }
-    })
+    }
 
-    _github_put_file(
-        repo=github_repo,
-        path="library/index.json",
-        content_bytes=json.dumps(catalog, ensure_ascii=False, indent=2).encode("utf-8"),
-        token=github_token,
-        message=f"Update library catalog: {meta['title']}"
-    )
-    return True
+    index_url = f"https://api.github.com/repos/{github_repo}/contents/library/index.json"
+    headers = {
+        "Authorization": f"Bearer {github_token}",
+        "Accept": "application/vnd.github+json",
+    }
+    for _ in range(3):
+        current = requests.get(index_url, headers=headers, params={"ref": "main"}, timeout=20)
+        payload = {"message": f"Update library catalog: {meta['title']}", "branch": "main"}
+        if current.status_code == 404:
+            catalog = []
+        else:
+            current.raise_for_status()
+            data = current.json()
+            catalog = json.loads(base64.b64decode(data["content"]).decode("utf-8"))
+            # Use the SHA of the catalogue we read, so another write cannot be undone.
+            payload["sha"] = data["sha"]
+        updated = [entry, *(row for row in catalog if row.get("id") != item_id)]
+        body = json.dumps(updated, ensure_ascii=False, indent=2).encode("utf-8")
+        payload["content"] = base64.b64encode(body).decode("ascii")
+        result = requests.put(index_url, headers=headers, json=payload, timeout=20)
+        if result.status_code in (200, 201):
+            return True
+        if result.status_code not in (409, 422):
+            result.raise_for_status()
+    raise RuntimeError("O catálogo da biblioteca mudou durante a publicação. Tente novamente.")
 
 
 def delete_item_from_github_library(
@@ -747,35 +749,83 @@ def delete_item_from_github_library(
     github_token: str,
     github_repo: str = "Gabriel20gvn/drumscribe-studio",
 ):
-    headers = {
-        "Authorization": f"Bearer {github_token}",
-        "Accept": "application/vnd.github+json",
-    }
-    index_url = f"https://api.github.com/repos/{github_repo}/contents/library/index.json"
-    get_idx = requests.get(index_url, headers=headers, timeout=20)
-    if get_idx.status_code == 200:
-        raw_b64 = get_idx.json().get("content", "")
-        catalog = json.loads(base64.b64decode(raw_b64).decode("utf-8"))
-        catalog = [entry for entry in catalog if entry.get("id") != item_id]
-        _github_put_file(
-            repo=github_repo,
-            path="library/index.json",
-            content_bytes=json.dumps(catalog, ensure_ascii=False, indent=2).encode("utf-8"),
-            token=github_token,
-            message=f"Remove {item_id} from library catalog"
-        )
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", github_repo, re.ASCII):
+        raise ValueError("Repositório do GitHub inválido.")
+    owner, repo = github_repo.split("/")
+    folder = f"library/{item_id}"
+    headers = {"Authorization": f"Bearer {github_token}"}
+    query = """query LibraryRemoval($owner: String!, $repo: String!, $score: String!,
+                              $drums: String!, $backing: String!, $vocals: String!) {
+      repository(owner: $owner, name: $repo) {
+        ref(qualifiedName: "refs/heads/main") { target { ... on Commit {
+          oid
+          catalog: file(path: "library/index.json") { object { ... on Blob { text isTruncated } } }
+          score: file(path: $score) { type }
+          drums: file(path: $drums) { type }
+          backing: file(path: $backing) { type }
+          vocals: file(path: $vocals) { type }
+        } } }
+      }
+    }"""
+    mutation = """mutation RemoveLibraryItem($input: CreateCommitOnBranchInput!) {
+      createCommitOnBranch(input: $input) { commit { oid } }
+    }"""
+    files = {"score": f"{folder}/partitura_bateria.musicxml", "drums": f"{folder}/drums.mp3",
+             "backing": f"{folder}/no_drums.mp3", "vocals": f"{folder}/vocals.mp3"}
 
-    for fname in ["partitura_bateria.musicxml", "drums.mp3", "no_drums.mp3", "vocals.mp3"]:
-        f_url = f"https://api.github.com/repos/{github_repo}/contents/library/{item_id}/{fname}"
-        r = requests.get(f_url, headers=headers, timeout=15)
-        if r.status_code == 200:
-            sha = r.json().get("sha")
-            requests.delete(
-                f_url,
-                headers=headers,
-                json={"message": f"Delete {fname}", "sha": sha},
-                timeout=20,
-            )
+    def graphql(document, variables):
+        try:
+            response = requests.post("https://api.github.com/graphql", headers=headers,
+                                     json={"query": document, "variables": variables}, timeout=15)
+        except requests.RequestException as error:
+            raise RuntimeError("Não foi possível conectar ao GitHub para remover a partitura.") from error
+        if response.status_code in (401, 403):
+            raise RuntimeError("Confira a permissão de escrita do token do GitHub.")
+        try:
+            response.raise_for_status()
+            return response.json()
+        except (requests.RequestException, ValueError) as error:
+            raise RuntimeError("O GitHub não confirmou a remoção da partitura.") from error
+
+    for _ in range(3):
+        result = graphql(query, {"owner": owner, "repo": repo, **files})
+        repository = (result.get("data") or {}).get("repository") or {}
+        commit = (repository.get("ref") or {}).get("target") or {}
+        if result.get("errors") or not commit.get("oid"):
+            raise RuntimeError("Não foi possível acessar a biblioteca. Confira o repositório e o token do GitHub.")
+        catalog = []
+        if commit.get("catalog") is not None:
+            blob = commit["catalog"].get("object") or {}
+            try:
+                catalog = json.loads(blob["text"]) if not blob.get("isTruncated") else None
+            except (KeyError, TypeError, ValueError):
+                catalog = None
+            if not isinstance(catalog, list) or any(not isinstance(row, dict) for row in catalog):
+                raise RuntimeError("O catálogo da biblioteca está ilegível no GitHub.")
+
+        deletions = [{"path": path} for key, path in files.items()
+                     if (commit.get(key) or {}).get("type") == "blob"]
+        updated = [row for row in catalog if row.get("id") != item_id]
+        changes = {"deletions": deletions}
+        if len(updated) != len(catalog):
+            body = json.dumps(updated, ensure_ascii=False, indent=2).encode("utf-8")
+            changes["additions"] = [{"path": "library/index.json", "contents": base64.b64encode(body).decode("ascii")}]
+        if not deletions and not changes.get("additions"):
+            return
+
+        result = graphql(mutation, {"input": {
+            "branch": {"repositoryNameWithOwner": github_repo, "branchName": "main"},
+            "expectedHeadOid": commit["oid"],
+            "fileChanges": changes,
+            "message": {"headline": f"Remove score {item_id} from the library"},
+        }})
+        changed = ((result.get("data") or {}).get("createCommitOnBranch") or {}).get("commit") or {}
+        if changed.get("oid"):
+            return
+        if not any(error.get("type") == "STALE_DATA" or re.search(r"expected (?:branch|head)|head oid", error.get("message", ""), re.I)
+                   for error in result.get("errors", [])):
+            raise RuntimeError("O GitHub recusou a remoção. Confira a permissão de escrita do token.")
+    raise RuntimeError("A biblioteca mudou durante a remoção. Tente novamente.")
 
 
 def save_to_library(job_dir: str, result_data: Dict[str, Any], base_dir: str) -> Dict[str, Any]:

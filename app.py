@@ -1,9 +1,10 @@
 import os
 import json
+import re
 import time
 import uuid
 import shutil
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Literal
 
 from fastapi import FastAPI, UploadFile, File, Form, Header, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -237,22 +238,45 @@ async def get_library_file(item_id: str, filename: str):
 
 
 @app.delete("/api/library/{item_id}")
-async def delete_library_item(
+def delete_library_item(
     item_id: str,
     x_github_token: Optional[str] = Header(None),
-    x_github_repo: Optional[str] = Header("Gabriel20gvn/drumscribe-studio")
+    x_github_repo: Optional[str] = Header(None),
 ):
-    safe_id = os.path.basename(item_id)
-    item_dir = os.path.join(get_library_root(BASE_DIR), safe_id)
-    if os.path.isdir(item_dir):
-        shutil.rmtree(item_dir, ignore_errors=True)
-    token = (x_github_token or os.environ.get("GITHUB_TOKEN") or "").strip()
-    if token:
-        try:
-            delete_item_from_github_library(safe_id, token, x_github_repo or "Gabriel20gvn/drumscribe-studio")
-        except Exception:
-            pass
-    return {"deleted": True, "id": safe_id}
+    return _delete_library_item(item_id, "all", x_github_token, x_github_repo)
+
+
+@app.delete("/api/library/{item_id}/copies/{target}")
+def delete_library_item_copy(
+    item_id: str,
+    target: Literal["cloud", "server"],
+    x_github_token: Optional[str] = Header(None),
+    x_github_repo: Optional[str] = Header(None),
+):
+    return _delete_library_item(item_id, target, x_github_token, x_github_repo)
+
+
+def _delete_library_item(item_id: str, target: str, github_token: Optional[str], github_repo: Optional[str]):
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", item_id):
+        raise HTTPException(status_code=400, detail="Identificador da partitura inválido.")
+    if target != "server":
+        token = (github_token or os.environ.get("GITHUB_TOKEN") or "").strip()
+        if target == "cloud" and not token:
+            raise HTTPException(status_code=400, detail="Configure um token do GitHub com permissão de escrita para remover a cópia na nuvem.")
+        if token:
+            repo = (github_repo or os.environ.get("GITHUB_REPO") or "Gabriel20gvn/drumscribe-studio").strip()
+            try:
+                delete_item_from_github_library(item_id, token, repo)
+            except (RuntimeError, ValueError) as error:
+                raise HTTPException(status_code=502, detail=str(error)) from error
+    if target != "cloud":
+        item_dir = os.path.join(get_library_root(BASE_DIR), item_id)
+        if os.path.isfile(os.path.join(item_dir, "meta.json")):
+            try:
+                shutil.rmtree(item_dir)
+            except OSError as error:
+                raise HTTPException(status_code=500, detail="Não foi possível remover a partitura do servidor.") from error
+    return {"deleted": True, "id": item_id, "target": target}
 
 
 def _serve_media_file(file_path: str, safe_name: str):

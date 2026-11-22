@@ -251,6 +251,7 @@
         <button id="exitReadingBtn" class="btn hidden" type="button">Sair da leitura</button>
       </div>
     </div>
+    <p id="audioStatus" role="status" hidden></p>
     <div class="legend-bar">
       <span><strong>Legenda:</strong></span>
       <span>• 1º Espaço: <strong>Bumbo</strong></span>
@@ -426,12 +427,16 @@
         tx.objectStore(STORE_NAME).delete(id);
         tx.oncomplete = () => resolve(true);
         tx.onerror = () => resolve(false);
+        tx.onabort = () => resolve(false);
       });
     } catch (e) { return false; }
   }
 
   let mergedLibrary = [];
   let activeLibraryId = null;
+  let libraryRefresh = 0;
+  const removingLibraryIds = new Set();
+  const removedCloudScores = new Set();
 
   async function cacheFromUrlsToDB(meta, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl) {
     const urls = [xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl];
@@ -484,6 +489,8 @@
   }
 
   async function refreshLibrary() {
+    const refresh = ++libraryRefresh;
+    const repo = getRepoName();
     const byId = new Map();
 
     const localItems = await dbGetAllScores();
@@ -495,9 +502,9 @@
         measures: item.measures,
         created_at: item.created_at || 0,
         hasLocal: Boolean(item.xmlBuffer?.byteLength),
-        hasDrums: Boolean(item.drumsBlob),
-        hasNoDrums: Boolean(item.noDrumsBlob),
-        hasVocals: Boolean(item.vocalsBlob),
+        hasDrums: Boolean(item.drumsBlob?.size),
+        hasNoDrums: Boolean(item.noDrumsBlob?.size),
+        hasVocals: Boolean(item.vocalsBlob?.size),
         hasCloud: false,
         hasServer: false,
         cloudMeta: null,
@@ -507,6 +514,7 @@
 
     const cloudItems = await fetchCloudCatalog();
     for (const cItem of cloudItems) {
+      if (removedCloudScores.has(`${repo}/${cItem.id}`)) continue;
       const existing = byId.get(cItem.id);
       if (existing) {
         existing.hasCloud = true;
@@ -556,6 +564,7 @@
       } catch (e) {}
     }
 
+    if (refresh !== libraryRefresh) return;
     mergedLibrary = Array.from(byId.values()).sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
     document.getElementById('libraryCount').textContent = mergedLibrary.length;
     document.getElementById('libraryList').setAttribute('aria-busy', 'false');
@@ -601,7 +610,7 @@
           <div class="lib-actions">
             <button class="btn" data-library-action="open" type="button">Abrir <span class="ui-symbol" aria-hidden="true">→</span></button>
             ${(item.hasCloud || item.hasServer) && !readyOffline ? '<button class="btn btn-accent" data-library-action="save" type="button"><span class="ui-symbol" aria-hidden="true">↓</span> Salvar offline</button>' : ''}
-            <button class="btn btn-danger remove-score" data-library-action="remove" type="button" aria-label="Remover partitura" title="Remover partitura"><span class="trash-icon" aria-hidden="true"></span></button>
+            <button class="btn btn-danger remove-score" data-library-action="remove" type="button" aria-label="Remover partitura" title="Remover partitura" ${removingLibraryIds.has(item.id) ? 'disabled' : ''}><span class="trash-icon" aria-hidden="true"></span></button>
           </div>
         </article>
       `;
@@ -612,6 +621,7 @@
     const button = event.target.closest('[data-library-action]');
     if (!button) return;
     const id = button.closest('[data-score-id]').dataset.scoreId;
+    if (removingLibraryIds.has(id)) return;
     const actions = { open: window.openLibraryItem, save: window.saveLibraryItemOffline, remove: window.removeLibraryItem };
     actions[button.dataset.libraryAction](id);
   });
@@ -636,6 +646,25 @@
       status.textContent = error.message || 'Falha ao salvar no celular. Tente novamente.';
     }
   };
+
+  function loadLibraryAudio(item, localRec) {
+    const localAudio = {
+      drums: localRec?.drumsBlob,
+      no_drums: localRec?.noDrumsBlob,
+      vocals: localRec?.vocalsBlob
+    };
+    const sources = {};
+    for (const name of Object.keys(tracks)) {
+      const cloudPath = item?.cloudMeta?.audio_mp3?.[name];
+      const serverPath = item?.serverMeta?.audio_mp3?.[name];
+      sources[name] = localAudio[name]?.size ? localAudio[name] : null;
+      if (!sources[name] && navigator.onLine) {
+        if (cloudPath) sources[name] = resolveCloudAssetUrl(cloudPath);
+        else if (serverPath) sources[name] = apiUrl(`/api/library/${encodeURIComponent(item.id)}/${encodeURIComponent(serverPath)}`);
+      }
+    }
+    loadTrackSources(sources);
+  }
 
   window.openLibraryItem = async function(id) {
     stopPlayback();
@@ -670,10 +699,7 @@
       document.getElementById('songMetaDisplay').textContent = `• ${localRec.bpm} BPM • ${localRec.measures} compassos`;
       loadScoreIntoAlphaTab(new Uint8Array(localRec.xmlBuffer), localRec.bpm, localRec.audio_offset_seconds);
 
-      resetTracks();
-      if (localRec.drumsBlob) setTrackSource('drums', URL.createObjectURL(localRec.drumsBlob));
-      if (localRec.noDrumsBlob) setTrackSource('no_drums', URL.createObjectURL(localRec.noDrumsBlob));
-      if (localRec.vocalsBlob) setTrackSource('vocals', URL.createObjectURL(localRec.vocalsBlob));
+      loadLibraryAudio(item, localRec);
 
       const xmlBlobUrl = URL.createObjectURL(new Blob([localRec.xmlBuffer], { type: 'application/vnd.recordare.musicxml+xml' }));
       document.getElementById('downloadLinks').innerHTML = `
@@ -688,18 +714,12 @@
     if (item.hasCloud && item.cloudMeta) {
       const m = item.cloudMeta;
       const xmlUrl = resolveCloudAssetUrl(m.musicxml);
-      const drumsUrl = resolveCloudAssetUrl(m.audio_mp3 && m.audio_mp3.drums);
-      const noDrumsUrl = resolveCloudAssetUrl(m.audio_mp3 && m.audio_mp3.no_drums);
-      const vocalsUrl = resolveCloudAssetUrl(m.audio_mp3 && m.audio_mp3.vocals);
 
       document.getElementById('songTitleDisplay').textContent = m.title;
       document.getElementById('songMetaDisplay').textContent = `• ${m.bpm} BPM • ${m.measures} compassos`;
       loadScoreIntoAlphaTab(xmlUrl, m.bpm, m.audio_offset_seconds);
 
-      resetTracks();
-      if (drumsUrl) setTrackSource('drums', drumsUrl);
-      if (noDrumsUrl) setTrackSource('no_drums', noDrumsUrl);
-      if (vocalsUrl) setTrackSource('vocals', vocalsUrl);
+      loadLibraryAudio(item);
 
       document.getElementById('downloadLinks').innerHTML = `
         <a class="btn" href="${xmlUrl}" download="${m.title}.musicxml">📄 Baixar MusicXML</a>
@@ -712,18 +732,12 @@
     if (item.hasServer && item.serverMeta) {
       const m = item.serverMeta;
       const xmlUrl = apiUrl(`/api/library/${id}/${m.musicxml}`);
-      const drumsUrl = m.audio_mp3.drums ? apiUrl(`/api/library/${id}/${m.audio_mp3.drums}`) : null;
-      const noDrumsUrl = m.audio_mp3.no_drums ? apiUrl(`/api/library/${id}/${m.audio_mp3.no_drums}`) : null;
-      const vocalsUrl = m.audio_mp3.vocals ? apiUrl(`/api/library/${id}/${m.audio_mp3.vocals}`) : null;
 
       document.getElementById('songTitleDisplay').textContent = m.title;
       document.getElementById('songMetaDisplay').textContent = `• ${m.bpm} BPM • ${m.measures} compassos`;
       loadScoreIntoAlphaTab(xmlUrl, m.bpm, m.audio_offset_seconds);
 
-      resetTracks();
-      if (drumsUrl) setTrackSource('drums', drumsUrl);
-      if (noDrumsUrl) setTrackSource('no_drums', noDrumsUrl);
-      if (vocalsUrl) setTrackSource('vocals', vocalsUrl);
+      loadLibraryAudio(item);
 
       document.getElementById('downloadLinks').innerHTML = `
         <a class="btn" href="${xmlUrl}" download>📄 Baixar MusicXML</a>
@@ -734,19 +748,135 @@
     }
   };
 
-  window.removeLibraryItem = async function(id) {
-    if (!confirm('Remover esta partitura da biblioteca?')) return;
-    await dbDeleteScore(id);
-    try {
-      const headers = {};
-      const tok = getGithubToken();
-      if (tok) {
-        headers['X-Github-Token'] = tok;
-        headers['X-Github-Repo'] = getRepoName();
+  async function removeCloudScore(id, repo, token) {
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('Confira o nome do repositório GitHub nas configurações.');
+    const [owner, name] = repo.split('/');
+    const folder = `library/${id}`;
+    const files = {
+      score: `${folder}/partitura_bateria.musicxml`,
+      drums: `${folder}/drums.mp3`,
+      backing: `${folder}/no_drums.mp3`,
+      vocals: `${folder}/vocals.mp3`
+    };
+    const query = `query LibraryRemoval($owner: String!, $repo: String!, $score: String!,
+                                      $drums: String!, $backing: String!, $vocals: String!) {
+      repository(owner: $owner, name: $repo) {
+        ref(qualifiedName: "refs/heads/main") { target { ... on Commit {
+          oid
+          catalog: file(path: "library/index.json") { object { ... on Blob { text isTruncated } } }
+          score: file(path: $score) { type }
+          drums: file(path: $drums) { type }
+          backing: file(path: $backing) { type }
+          vocals: file(path: $vocals) { type }
+        } } }
       }
-      await fetchWithTimeout(apiUrl(`/api/library/${id}`), { method: 'DELETE', headers }, 4000);
-    } catch (e) {}
-    await refreshLibrary();
+    }`;
+    const mutation = `mutation RemoveLibraryItem($input: CreateCommitOnBranchInput!) {
+      createCommitOnBranch(input: $input) { commit { oid } }
+    }`;
+    async function github(document, variables) {
+      const response = await fetchWithTimeout('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: document, variables })
+      }, 15000).catch(() => null);
+      if (!response) throw new Error('Não foi possível conectar ao GitHub para remover a partitura.');
+      if (response.status === 401 || response.status === 403) throw new Error('Confira a permissão de escrita do token do GitHub.');
+      if (!response.ok) throw new Error('O GitHub não confirmou a remoção da partitura.');
+      return response.json();
+    }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const result = await github(query, { owner, repo: name, ...files });
+      const commit = result.data?.repository?.ref?.target;
+      if (result.errors?.length || !commit?.oid) {
+        throw new Error('Não foi possível acessar a biblioteca. Confira o repositório e o token do GitHub.');
+      }
+      let catalog = [];
+      if (commit.catalog) {
+        const blob = commit.catalog.object;
+        try { catalog = blob && !blob.isTruncated ? JSON.parse(blob.text) : null; }
+        catch { catalog = null; }
+        if (!Array.isArray(catalog) || catalog.some(item => !item || typeof item !== 'object' || Array.isArray(item))) {
+          throw new Error('O catálogo da biblioteca está ilegível no GitHub.');
+        }
+      }
+      const updated = catalog.filter(item => item.id !== id);
+      const deletions = Object.entries(files).filter(([key]) => commit[key]?.type === 'blob').map(([, path]) => ({ path }));
+      const fileChanges = { deletions };
+      if (updated.length !== catalog.length) {
+        const bytes = new TextEncoder().encode(JSON.stringify(updated, null, 2));
+        const contents = btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''));
+        fileChanges.additions = [{ path: 'library/index.json', contents }];
+      }
+      if (!deletions.length && !fileChanges.additions) return;
+      const saved = await github(mutation, { input: {
+        branch: { repositoryNameWithOwner: repo, branchName: 'main' },
+        expectedHeadOid: commit.oid,
+        fileChanges,
+        message: { headline: `Remove score ${id} from the library` }
+      } });
+      if (saved.data?.createCommitOnBranch?.commit?.oid) return;
+      const conflict = saved.errors?.some(error => error.type === 'STALE_DATA' || /expected (?:branch|head)|head oid/i.test(error.message));
+      if (!conflict) throw new Error('O GitHub recusou a remoção. Confira a permissão de escrita do token.');
+    }
+    throw new Error('A biblioteca mudou durante a remoção. Tente novamente.');
+  }
+
+  async function removeScoreFromServer(id, target, repo) {
+    if (!getApiBase() && location.hostname.endsWith('.github.io')) {
+      throw new Error(target === 'cloud'
+        ? 'Configure um token do GitHub com permissão de escrita em Gerar partitura › Configurações avançadas.'
+        : 'Conecte o servidor para remover a cópia que está nele.');
+    }
+    const response = await fetchWithTimeout(apiUrl(`/api/library/${encodeURIComponent(id)}/copies/${target}`), {
+      method: 'DELETE',
+      headers: { 'X-Github-Repo': repo }
+    }, 50000).catch(() => null);
+    if (!response) throw new Error('Não foi possível conectar ao servidor para remover a partitura.');
+    if (response.status === 404) throw new Error('Atualize o servidor para remover esta cópia da partitura.');
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'O servidor recusou a remoção da partitura.');
+    if (!result.deleted || result.id !== id || result.target !== target) {
+      throw new Error('O servidor não confirmou a remoção. Atualize o servidor e tente de novo.');
+    }
+  }
+
+  window.removeLibraryItem = async function(id) {
+    const item = mergedLibrary.find(entry => entry.id === id);
+    if (!item || removingLibraryIds.has(id) || !/^[\w-]+$/.test(id)) return;
+    if (!confirm(`Remover “${item.title}” da biblioteca?`)) return;
+    const status = document.getElementById('offlineStatus');
+    removingLibraryIds.add(id);
+    renderLibraryList();
+    status.textContent = `Removendo “${item.title}”…`;
+    let removed = false;
+    try {
+      const repo = getRepoName();
+      if (item.hasCloud || item.hasServer) {
+        if (!navigator.onLine) throw new Error('Conecte-se à internet para remover a cópia da biblioteca online.');
+        if (item.hasCloud) {
+          const token = getGithubToken();
+          if (token) await removeCloudScore(id, repo, token);
+          else await removeScoreFromServer(id, 'cloud', repo);
+          removedCloudScores.add(`${repo}/${id}`);
+        }
+        if (item.hasServer) await removeScoreFromServer(id, 'server', repo);
+      }
+      if (item.hasLocal && !(await dbDeleteScore(id))) throw new Error('Não foi possível remover a cópia offline deste aparelho.');
+      if (activeLibraryId === id) activeLibraryId = null;
+      removed = true;
+      status.textContent = `“${item.title}” foi removida da biblioteca.`;
+    } catch (error) {
+      status.textContent = error.message || 'Não foi possível remover a partitura. Tente novamente.';
+    } finally {
+      removingLibraryIds.delete(id);
+      if (removed) {
+        mergedLibrary = mergedLibrary.filter(entry => entry.id !== id);
+        document.getElementById('libraryCount').textContent = mergedLibrary.length;
+      }
+      renderLibraryList();
+      await refreshLibrary();
+    }
   };
 
   document.getElementById('librarySearch').addEventListener('input', renderLibraryList);
@@ -1053,29 +1183,48 @@
   const tracks = {
     drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
     no_drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
-    vocals: { audio: new Audio(), vol: 0.8, mute: false, solo: false, loaded: false }
+    vocals: { audio: new Audio(), vol: 0.8, mute: null, solo: false, loaded: false }
   };
 
   Object.values(tracks).forEach(t => {
     t.audio.preload = 'auto';
     t.audio.preservesPitch = true;
-    t.audio.crossOrigin = 'anonymous';
   });
 
   function resetTracks() {
     stopPlayback();
-    Object.values(tracks).forEach(t => {
-      t.audio.removeAttribute('src');
-      t.loaded = false;
-    });
+    for (const track of Object.values(tracks)) {
+      if (!track.loaded) continue;
+      track.loaded = false;
+      track.playRejected = false;
+      track.audio.removeAttribute('src');
+      track.audio.load();
+      if (track.objectUrl) URL.revokeObjectURL(track.objectUrl);
+      track.objectUrl = null;
+    }
+    updateMixerVolumes();
     updateTransportAvailability();
   }
 
+  function isTrackAvailable(track) {
+    return track.loaded && !track.audio.error;
+  }
+
+  function isTrackMuted(name, track) {
+    // The backing track generated by the app already includes the voice.
+    const backing = tracks.no_drums;
+    return track.mute ?? (name === 'vocals' && isTrackAvailable(backing) && (!isPlaying || !backing.playRejected));
+  }
+
   function updateMixerVolumes() {
-    const anySolo = Object.values(tracks).some(t => t.solo);
-    Object.values(tracks).forEach(t => {
-      t.audio.volume = anySolo ? (t.solo ? t.vol : 0) : (t.mute ? 0 : t.vol);
-    });
+    const anySolo = Object.values(tracks).some(track => track.solo && isTrackAvailable(track) && (!isPlaying || !track.playRejected));
+    for (const [name, track] of Object.entries(tracks)) {
+      track.audio.volume = track.vol;
+      track.audio.muted = track.vol === 0 || (anySolo ? !track.solo : isTrackMuted(name, track));
+      const muteBtn = document.querySelector(`[data-track="${name}"] [data-action="mute"]`);
+      muteBtn.classList.toggle('active', isTrackMuted(name, track));
+      muteBtn.setAttribute('aria-pressed', String(isTrackMuted(name, track)));
+    }
   }
 
   document.querySelectorAll('.channel-strip').forEach(strip => {
@@ -1092,9 +1241,7 @@
 
     slider.addEventListener('input', () => { tracks[name].vol = parseFloat(slider.value); updateMixerVolumes(); });
     muteBtn.addEventListener('click', () => {
-      tracks[name].mute = !tracks[name].mute;
-      muteBtn.classList.toggle('active', tracks[name].mute);
-      muteBtn.setAttribute('aria-pressed', String(tracks[name].mute));
+      tracks[name].mute = !isTrackMuted(name, tracks[name]);
       updateMixerVolumes();
     });
     soloBtn.addEventListener('click', () => {
@@ -1107,15 +1254,22 @@
 
   function setTrackSource(name, src) {
     if (!src) return;
-    tracks[name].audio.src = src;
-    tracks[name].loaded = true;
+    const track = tracks[name];
+    track.objectUrl = src instanceof Blob ? URL.createObjectURL(src) : null;
+    track.audio.src = track.objectUrl || src;
+    track.loaded = true;
+  }
+
+  function loadTrackSources(sources) {
+    resetTracks();
+    for (const [name, source] of Object.entries(sources)) setTrackSource(name, source);
+    updateMixerVolumes();
     updateTransportAvailability();
   }
 
   function getMasterTrack() {
-    return tracks.no_drums.loaded ? tracks.no_drums.audio :
-           tracks.drums.loaded ? tracks.drums.audio :
-           tracks.vocals.loaded ? tracks.vocals.audio : null;
+    const available = [tracks.no_drums, tracks.drums, tracks.vocals].filter(isTrackAvailable);
+    return available.find(track => !isPlaying || !track.playRejected)?.audio || null;
   }
 
   const playPauseBtn = document.getElementById('playPauseBtn');
@@ -1134,6 +1288,8 @@
   }
 
   let isPlaying = false;
+  let startingPlayback = false;
+  let playbackRequest = 0;
   let cursorFrame = null;
 
   followScoreBtn.setAttribute('aria-pressed', String(followScore));
@@ -1157,10 +1313,28 @@
 
   function updateTransportAvailability() {
     const master = getMasterTrack();
-    playPauseBtn.disabled = !master;
+    playPauseBtn.disabled = startingPlayback || !master;
     stopBtn.disabled = !master;
     seekSlider.disabled = !master || !Number.isFinite(master.duration) || master.duration <= 0;
     if (!master) timeTotal.textContent = '00:00';
+
+    const failed = [];
+    for (const [name, track] of Object.entries(tracks)) {
+      const strip = document.querySelector(`[data-track="${name}"]`);
+      for (const control of strip.querySelectorAll('button, input')) control.disabled = !isTrackAvailable(track);
+      if (track.loaded && (track.audio.error || track.playRejected)) {
+        failed.push(strip.querySelector('.channel-header span').textContent);
+      }
+    }
+    const status = document.getElementById('audioStatus');
+    status.textContent = failed.length
+      ? `Não foi possível tocar: ${failed.join(', ')}. Abra a música novamente para tentar.`
+      : !tracks.drums.loaded && master
+        ? 'A faixa de bateria não está disponível neste aparelho.'
+        : !master
+          ? 'Esta partitura não tem faixas de áudio disponíveis neste aparelho.'
+          : '';
+    status.hidden = !status.textContent;
   }
 
   function setPlaybackButton(playing) {
@@ -1185,6 +1359,8 @@
   }
 
   function stopPlayback() {
+    playbackRequest++;
+    startingPlayback = false;
     for (const tr of Object.values(tracks)) { if (tr.loaded) { tr.audio.pause(); tr.audio.currentTime = 0; } }
     isPlaying = false;
     stopCursorAnimation();
@@ -1194,6 +1370,7 @@
     lastCursorBar = -1;
     lastGridBar = -1;
     updateScorePlayhead();
+    updateTransportAvailability();
   }
 
   playPauseBtn.addEventListener('click', async () => {
@@ -1203,22 +1380,32 @@
     if (!isPlaying) {
       const t = master.currentTime;
       const rate = parseFloat(speedSlider.value);
+      const request = ++playbackRequest;
+      startingPlayback = true;
+      const available = Object.values(tracks).filter(isTrackAvailable);
+      for (const track of available) track.playRejected = false;
+      updateTransportAvailability();
       updateMixerVolumes();
-      const audios = Object.values(tracks).filter(tr => tr.loaded).map(tr => tr.audio);
+      const audios = available.map(track => track.audio);
       for (const audio of audios) { audio.currentTime = t; audio.playbackRate = rate; }
-      try {
-        await Promise.all(audios.map(audio => audio.play()));
-      } catch (error) {
-        audios.forEach(audio => audio.pause());
+      const results = await Promise.allSettled(audios.map(audio => audio.play()));
+      if (request !== playbackRequest) return;
+      startingPlayback = false;
+      available.forEach((track, index) => { track.playRejected = results[index].status === 'rejected'; });
+      isPlaying = available.some(track => !track.playRejected && isTrackAvailable(track));
+      const playingMaster = getMasterTrack();
+      updateMixerVolumes();
+      updateTransportAvailability();
+      if (!isPlaying) {
         alert('Não foi possível iniciar o áudio. Toque em Tocar novamente.');
         return;
       }
-      for (const audio of audios) {
-        if (audio !== master && Math.abs(audio.currentTime - master.currentTime) > 0.03) {
-          audio.currentTime = master.currentTime;
+      for (const track of available) {
+        const { audio } = track;
+        if (!track.playRejected && audio !== playingMaster && Math.abs(audio.currentTime - playingMaster.currentTime) > 0.03) {
+          audio.currentTime = playingMaster.currentTime;
         }
       }
-      isPlaying = true;
       setPlaybackButton(true);
       updateScorePlayhead(true);
       startCursorAnimation();
@@ -1228,17 +1415,24 @@
       stopCursorAnimation();
       setPlaybackButton(false);
       updateScorePlayhead();
+      updateTransportAvailability();
     }
   });
 
   Object.values(tracks).forEach(({ audio }) => {
     audio.addEventListener('durationchange', updateTransportAvailability);
+    audio.addEventListener('error', () => {
+      if (isPlaying && !getMasterTrack()) stopPlayback();
+      updateMixerVolumes();
+      updateTransportAvailability();
+    });
     audio.addEventListener('ended', () => {
       if (getMasterTrack() !== audio) return;
       isPlaying = false;
       stopCursorAnimation();
       setPlaybackButton(false);
       updateScorePlayhead();
+      updateTransportAvailability();
     });
   });
 
@@ -1266,7 +1460,7 @@
     seekSlider.value = (master.currentTime / master.duration) * 100;
     if (isPlaying) {
       for (const tr of Object.values(tracks)) {
-        if (tr.loaded && tr.audio !== master && Math.abs(tr.audio.currentTime - master.currentTime) > 0.08) {
+        if (isTrackAvailable(tr) && !tr.playRejected && tr.audio !== master && Math.abs(tr.audio.currentTime - master.currentTime) > 0.08) {
           tr.audio.currentTime = master.currentTime;
         }
       }
@@ -1351,10 +1545,7 @@
             document.getElementById('songMetaDisplay').textContent = `• ${res.bpm} BPM • ${res.measures} compassos`;
 
             loadScoreIntoAlphaTab(xmlUrl, res.bpm, res.audio_offset_seconds);
-            resetTracks();
-            if (drumsUrl) setTrackSource('drums', drumsUrl);
-            if (noDrumsUrl) setTrackSource('no_drums', noDrumsUrl);
-            if (vocalsUrl) setTrackSource('vocals', vocalsUrl);
+            loadTrackSources({ drums: drumsUrl, no_drums: noDrumsUrl, vocals: vocalsUrl });
             document.getElementById('scoreCard').scrollIntoView();
 
             document.getElementById('downloadLinks').innerHTML = `
@@ -1405,10 +1596,7 @@
     document.getElementById('songTitleDisplay').textContent = title;
     document.getElementById('songMetaDisplay').textContent = '• Arquivo Local';
 
-    resetTracks();
-    if (drumsFile) setTrackSource('drums', URL.createObjectURL(drumsFile));
-    if (playbackFile) setTrackSource('no_drums', URL.createObjectURL(playbackFile));
-    if (vocalsFile) setTrackSource('vocals', URL.createObjectURL(vocalsFile));
+    loadTrackSources({ drums: drumsFile, no_drums: playbackFile, vocals: vocalsFile });
     document.getElementById('downloadLinks').replaceChildren();
     document.getElementById('scoreCard').scrollIntoView();
 

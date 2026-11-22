@@ -296,6 +296,7 @@ input[type="range"] { width: 100%; min-width: 0; margin: 0; accent-color: var(--
 .zoom-controls .btn { min-width: 38px; min-height: 38px; padding: 4px; font-size: 1.12rem; }
 #speedSlider { width: 78px; }
 #scoreCard { scroll-margin-top: 8px; }
+#audioStatus { margin: 0 0 12px; color: var(--warn); font-size: .84rem; }
 
 .transport-bar {
   position: fixed;

@@ -1,4 +1,4 @@
-const CACHE = 'drumscribe-shell-2026-11-22-12';
+const CACHE = 'drumscribe-shell-2026-11-22-13';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './studio.css', './score-format.js',

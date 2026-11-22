@@ -293,9 +293,28 @@ def _transcribe_drum_events_adtof(drums_wav: str, job_dir: str) -> Dict[str, Lis
     return events
 
 
+def _refine_bpm_from_beats(tempo_estimate: float, beat_times: np.ndarray) -> float:
+    """Average tracked beat intervals to remove librosa's discrete tempo-bin error."""
+    if not np.isfinite(tempo_estimate) or tempo_estimate <= 0 or len(beat_times) < 12:
+        return tempo_estimate
+    expected_interval = 60.0 / tempo_estimate
+    intervals = np.diff(beat_times)
+    regular = intervals[
+        (intervals >= expected_interval * 0.8)
+        & (intervals <= expected_interval * 1.2)
+    ]
+    if len(regular) < 10 or len(regular) < len(intervals) * 0.5:
+        return tempo_estimate
+    refined = 60.0 / float(np.mean(regular))
+    if abs(refined - tempo_estimate) > tempo_estimate * 0.08:
+        return tempo_estimate
+    nearest_integer = round(refined)
+    return float(nearest_integer if abs(refined - nearest_integer) < 0.05 else round(refined, 2))
+
+
 def _build_drum_musicxml(
     title: str,
-    bpm: int,
+    bpm: float,
     measures_events: List[List[tuple[int, set]]],
     lyrics_by_measure: Dict[int, List[str]],
     audio_offset_seconds: float = 0.0,
@@ -461,9 +480,10 @@ def transcribe_drums_and_lyrics(
 
     tempo_est, beat_frames = librosa.beat.beat_track(y=y, sr=sr, start_bpm=128.0)
     bpm = float(np.atleast_1d(tempo_est)[0])
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr)
+    bpm = _refine_bpm_from_beats(bpm, beat_times)
     if bpm < 60 or bpm > 210 or math.isnan(bpm):
         bpm = 120.0
-    bpm = round(bpm)
 
     sec_per_beat = 60.0 / bpm
     sec_per_16th = sec_per_beat / 4.0
@@ -475,8 +495,7 @@ def transcribe_drums_and_lyrics(
         all_onsets = np.array([0.0])
 
     first_hit = float(np.min(all_onsets))
-    if len(beat_frames) > 0:
-        beat_times = librosa.frames_to_time(beat_frames, sr=sr)
+    if len(beat_times) > 0:
         prior_beats = beat_times[beat_times <= first_hit + 0.10]
         grid_origin = float(prior_beats[-1]) if len(prior_beats) > 0 else min(first_hit, float(beat_times[0]))
     else:

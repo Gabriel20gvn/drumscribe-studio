@@ -20,7 +20,9 @@ Abra `drumscribe_colab_backend.ipynb` no Google Colab e execute as duas células
 !pip install -q "git+https://github.com/xavriley/ADTOF-pytorch.git@85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9"
 ```
 
-Execute `!git pull` na pasta `/content/drumscribe-studio` e reinicie a célula do servidor. As partituras já existentes foram geradas pelo método anterior; gere a música outra vez para obter as notas do ADTOF. Mesmo com o novo modelo, a separação da bateria e a transcrição podem cometer erros, especialmente em músicas com instrumentos que vazam para a faixa de bateria.
+Execute `!git pull` na pasta `/content/drumscribe-studio` e reinicie a célula do servidor. Partituras feitas antes da instalação do ADTOF precisam ser geradas novamente para receber as notas do modelo. Mesmo com o novo modelo, a separação da bateria e a transcrição podem cometer erros, especialmente em músicas com instrumentos que vazam para a faixa de bateria.
+
+O BPM é refinado pela média dos intervalos entre batidas detectadas. Isso evita que uma pequena diferença de andamento se acumule e desloque as notas após vários compassos. A música “O Leão E A Igreja” foi estimada inicialmente em 129,2 BPM, mas seus intervalos indicam 128 BPM. A partitura dessa música já salva usa a estimativa antiga; gere-a novamente para aplicar a correção.
 
 O cursor da partitura segue o áudio usando o BPM estimado e o início do primeiro compasso salvo com a nova transcrição. Em arquivos antigos ou MIDI importado, o cursor parte do início do áudio; nesses casos, a posição pode não coincidir com a gravação.
 

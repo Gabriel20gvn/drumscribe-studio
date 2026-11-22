@@ -27,6 +27,7 @@ from adtof_pytorch import (
     load_pytorch_weights, PeakPicker, FRAME_RNN_THRESHOLDS, LABELS_5,
 )
 from adtof_pytorch.audio import create_adtof_processor
+from drum_timing import first_drum_beat_origin
 
 
 def sanitize_filename(name: str) -> str:
@@ -529,16 +530,7 @@ def transcribe_drums_and_lyrics(
     ghost_snare_times = _detect_ghost_snare_times(
         y, sr, drum_events["snare"], drum_events["crash"]
     )
-    all_onsets = np.array([t for times in drum_events.values() for t in times], dtype=float)
-    if len(all_onsets) == 0:
-        all_onsets = np.array([0.0])
-
-    first_hit = float(np.min(all_onsets))
-    if len(beat_times) > 0:
-        prior_beats = beat_times[beat_times <= first_hit + 0.10]
-        grid_origin = float(prior_beats[-1]) if len(prior_beats) > 0 else min(first_hit, float(beat_times[0]))
-    else:
-        grid_origin = first_hit
+    grid_origin = first_drum_beat_origin(y, sr, bpm, beat_times, drum_events)
 
     effective_duration = max(sec_per_measure, duration_sec - grid_origin)
     total_measures = max(1, int(math.ceil(effective_duration / sec_per_measure)))

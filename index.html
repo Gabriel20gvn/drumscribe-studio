@@ -812,6 +812,7 @@
       bpm: meta.bpm,
       measures: meta.measures,
       audio_offset_seconds: meta.audio_offset_seconds || 0,
+      score_revision: meta.score_revision || 0,
       created_at: meta.created_at || Date.now() / 1000,
       xmlBuffer: await xmlResp.arrayBuffer(),
       drumsBlob: drumsResp ? await drumsResp.blob() : null,
@@ -994,7 +995,29 @@
     activeLibraryId = id;
     renderLibraryList();
 
-    const localRec = await dbGetScore(id);
+    const item = mergedLibrary.find(x => x.id === id);
+    let localRec = await dbGetScore(id);
+    const cloud = item?.cloudMeta;
+    if (localRec?.xmlBuffer && cloud?.score_revision > (localRec.score_revision || 0) && navigator.onLine) {
+      try {
+        const url = resolveCloudAssetUrl(cloud.musicxml);
+        const response = await fetch(`${url}${url.includes('?') ? '&' : '?'}revision=${cloud.score_revision}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Partitura atualizada indisponível');
+        const updated = {
+          ...localRec,
+          xmlBuffer: await response.arrayBuffer(),
+          bpm: cloud.bpm,
+          measures: cloud.measures,
+          audio_offset_seconds: cloud.audio_offset_seconds || 0,
+          score_revision: cloud.score_revision
+        };
+        if (!updated.xmlBuffer.byteLength || !(await dbPutScore(updated))) throw new Error('Não foi possível salvar a atualização');
+        localRec = updated;
+        document.getElementById('offlineStatus').textContent = 'Partitura corrigida e atualizada neste celular.';
+      } catch (_) {
+        document.getElementById('offlineStatus').textContent = 'Não foi possível atualizar a partitura offline. Abra novamente com internet.';
+      }
+    }
     if (localRec && localRec.xmlBuffer) {
       document.getElementById('songTitleDisplay').textContent = localRec.title;
       document.getElementById('songMetaDisplay').textContent = `• ${localRec.bpm} BPM • ${localRec.measures} compassos`;
@@ -1013,7 +1036,6 @@
       return;
     }
 
-    const item = mergedLibrary.find(x => x.id === id);
     if (!item) return;
 
     if (item.hasCloud && item.cloudMeta) {

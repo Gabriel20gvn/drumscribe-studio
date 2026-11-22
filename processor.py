@@ -17,6 +17,7 @@ import requests
 import numpy as np
 import soundfile as sf
 import librosa
+from scipy.signal import butter, sosfilt
 import yt_dlp
 import whisper
 from music21 import stream, note, chord, meter, tempo, metadata
@@ -312,6 +313,37 @@ def _refine_bpm_from_beats(tempo_estimate: float, beat_times: np.ndarray) -> flo
     return float(nearest_integer if abs(refined - nearest_integer) < 0.05 else round(refined, 2))
 
 
+def _detect_ghost_snare_times(
+    y: np.ndarray, sr: int, snare_times: List[float], crash_times: List[float]
+) -> set[float]:
+    """Flag exceptionally quiet detected snares, relative to nearby snare hits."""
+    if len(snare_times) < 8:
+        return set()
+    snare_band = sosfilt(
+        butter(4, [180, 3000], btype="bandpass", fs=sr, output="sos"), y
+    )
+    times = np.asarray(snare_times, dtype=float)
+    energy = np.zeros(len(times), dtype=float)
+    for index, hit_time in enumerate(times):
+        start = max(0, int((hit_time - 0.015) * sr))
+        end = min(len(snare_band), int((hit_time + 0.065) * sr))
+        if end > start:
+            segment = snare_band[start:end]
+            energy[index] = float(np.sqrt(np.mean(segment * segment)))
+
+    ghosts: set[float] = set()
+    global_reference = float(np.percentile(energy, 85))
+    for index, hit_time in enumerate(times):
+        nearby = energy[np.abs(times - hit_time) <= 12.0]
+        reference = float(np.percentile(nearby, 85)) if len(nearby) >= 6 else global_reference
+        if reference <= 0 or energy[index] >= reference * 0.35:
+            continue
+        if any(abs(hit_time - crash_time) <= 0.04 for crash_time in crash_times):
+            continue
+        ghosts.add(float(hit_time))
+    return ghosts
+
+
 def _build_drum_musicxml(
     title: str,
     bpm: float,
@@ -358,6 +390,7 @@ def _build_drum_musicxml(
     piece_spec = {
         "kick":  ("F", "4", "normal", "P1-I37"),
         "snare": ("C", "5", "normal", "P1-I39"),
+        "snare_ghost": ("C", "5", "normal", "P1-I39"),
         "tom":   ("E", "5", "normal", "P1-I48"),
         "hihat": ("G", "5", "x",      "P1-I43"),
         "crash": ("A", "5", "x",      "P1-I50"),
@@ -392,7 +425,7 @@ def _build_drum_musicxml(
                 if dot_flag:
                     ET.SubElement(n_el, "dot")
             else:
-                ordered = [p for p in ["kick", "snare", "tom", "hihat", "crash"] if p in hits]
+                ordered = [p for p in ["kick", "snare", "snare_ghost", "tom", "hihat", "crash"] if p in hits]
                 for idx_h, piece in enumerate(ordered):
                     step, octave, nhead, inst_id = piece_spec[piece]
                     n_el = ET.SubElement(measure, "note")
@@ -408,7 +441,10 @@ def _build_drum_musicxml(
                     if dot_flag:
                         ET.SubElement(n_el, "dot")
                     ET.SubElement(n_el, "stem").text = stem
-                    ET.SubElement(n_el, "notehead").text = nhead
+                    head = ET.SubElement(n_el, "notehead")
+                    head.text = nhead
+                    if piece == "snare_ghost":
+                        head.set("parentheses", "yes")
             position += dur_steps
 
     for m_idx, events in enumerate(measures_events):
@@ -442,7 +478,7 @@ def _build_drum_musicxml(
         position = 0
         for dur_steps, hits in events:
             upper = hits.intersection({"hihat", "crash"})
-            lower = hits.intersection({"kick", "snare", "tom"})
+            lower = hits.intersection({"kick", "snare", "snare_ghost", "tom"})
             if upper:
                 cymbals[position] = upper
             if lower:
@@ -490,6 +526,9 @@ def transcribe_drums_and_lyrics(
     sec_per_measure = sec_per_beat * 4.0
 
     drum_events = _transcribe_drum_events_adtof(drums_wav, job_dir)
+    ghost_snare_times = _detect_ghost_snare_times(
+        y, sr, drum_events["snare"], drum_events["crash"]
+    )
     all_onsets = np.array([t for times in drum_events.values() for t in times], dtype=float)
     if len(all_onsets) == 0:
         all_onsets = np.array([0.0])
@@ -513,7 +552,12 @@ def transcribe_drums_and_lyrics(
                 continue
             step = int(round((t - grid_origin) / sec_per_16th))
             if 0 <= step < total_steps:
-                grid.setdefault(step, set()).add(piece)
+                score_piece = "snare_ghost" if piece == "snare" and t in ghost_snare_times else piece
+                grid.setdefault(step, set()).add(score_piece)
+
+    for hits in grid.values():
+        if "snare" in hits:
+            hits.discard("snare_ghost")
 
     lyrics_by_measure: Dict[int, list[str]] = {}
     if vocals_wav and os.path.exists(vocals_wav):
@@ -550,7 +594,7 @@ def transcribe_drums_and_lyrics(
     midi_score.insert(0, metadata.Metadata())
     midi_score.metadata.title = title
     midi_part = stream.Part()
-    midi_pitch_map = {"kick": "B1", "snare": "D2", "tom": "B2", "hihat": "F#2", "crash": "C#3"}
+    midi_pitch_map = {"kick": "B1", "snare": "D2", "snare_ghost": "D2", "tom": "B2", "hihat": "F#2", "crash": "C#3"}
 
     for m_idx in range(total_measures):
         m_midi = stream.Measure(number=m_idx + 1)

@@ -332,6 +332,8 @@
     }
     .score-playhead {
       position: absolute;
+      left: 0;
+      top: 0;
       z-index: 5;
       width: 3px;
       min-height: 36px;
@@ -339,6 +341,7 @@
       box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.16);
       border-radius: 3px;
       pointer-events: none;
+      will-change: transform;
     }
     .legend-bar {
       display: flex;
@@ -1179,7 +1182,9 @@
   let scoreAudioOffset = 0;
   let scoreBpm = 120;
   let lastCursorBar = -1;
+  let lastCursorLineY = null;
   let scorePlayhead = null;
+  const barGeometryCache = new Map();
   const scoreViewSelect = document.getElementById('scoreViewSelect');
   const drumGridContainer = document.getElementById('drumGridContainer');
   if (localStorage.getItem('drumscribe_score_view') === 'grid') scoreViewSelect.value = 'grid';
@@ -1213,7 +1218,9 @@
     if (lastGridBar !== index) {
       drumGridContainer.querySelector('.grid-current')?.classList.remove('grid-current');
       active.card.classList.add('grid-current');
-      if (autoScroll && isPlaying) active.card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      if (autoScroll && (lastGridBar < 0 || active.card.offsetTop !== gridRender.cards[lastGridBar].card.offsetTop)) {
+        active.card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      }
       lastGridBar = index;
     }
     const fraction = Math.max(0, Math.min(1, (scoreTime - index * secondsPerBar) / secondsPerBar));
@@ -1246,39 +1253,51 @@
     const secondsPerBar = 240 / bpm;
     const scoreTime = Math.max(0, master.currentTime - scoreAudioOffset);
     const barIndex = Math.min(bars.length - 1, Math.floor(scoreTime / secondsPerBar));
-    const barBounds = lookup.findMasterBarByIndex(barIndex);
-    if (!barBounds) return;
+    let geometry = barGeometryCache.get(barIndex);
+    if (!geometry) {
+      const barBounds = lookup.findMasterBarByIndex(barIndex);
+      if (!barBounds) return;
+      const line = barBounds.lineAlignedBounds || barBounds.visualBounds;
+      const beatsByTick = new Map();
+      for (const bound of barBounds.bars[0]?.beats || []) {
+        const tick = bound.beat?.playbackStart;
+        if (Number.isFinite(tick) && !beatsByTick.has(tick)) beatsByTick.set(tick, bound.onNotesX);
+      }
+      geometry = {
+        line,
+        beats: [...beatsByTick].sort((a, b) => a[0] - b[0]),
+        totalTicks: bars[barIndex].calculateDuration() || 3840,
+        surfaceX: document.querySelector('#alphaTabContainer .at-surface')?.offsetLeft || 0,
+        surfaceY: document.querySelector('#alphaTabContainer .at-surface')?.offsetTop || 0
+      };
+      barGeometryCache.set(barIndex, geometry);
+    }
 
-    const line = barBounds.lineAlignedBounds || barBounds.visualBounds;
+    const { line, beats, totalTicks } = geometry;
     const localTime = Math.max(0, scoreTime - barIndex * secondsPerBar);
-    const totalTicks = bars[barIndex].calculateDuration() || 3840;
     const targetTick = localTime / secondsPerBar * totalTicks;
-    const beatBounds = (barBounds.bars[0] && barBounds.bars[0].beats || [])
-      .filter(b => b.beat && Number.isFinite(b.beat.playbackStart))
-      .sort((a, b) => a.beat.playbackStart - b.beat.playbackStart);
     let x = line.x + line.w * Math.min(1, localTime / secondsPerBar);
-    if (beatBounds.length) {
-      const nextIndex = beatBounds.findIndex(b => b.beat.playbackStart > targetTick);
-      const left = nextIndex <= 0 ? beatBounds[0] : beatBounds[nextIndex - 1];
-      const right = nextIndex < 0 ? null : beatBounds[nextIndex];
-      if (right && right.beat.playbackStart > left.beat.playbackStart) {
-        const fraction = (targetTick - left.beat.playbackStart) /
-          (right.beat.playbackStart - left.beat.playbackStart);
-        x = left.onNotesX + (right.onNotesX - left.onNotesX) * Math.max(0, Math.min(1, fraction));
+    if (beats.length) {
+      const nextIndex = beats.findIndex(([tick]) => tick > targetTick);
+      const left = nextIndex <= 0 ? beats[0] : beats[nextIndex - 1];
+      const right = nextIndex < 0 ? null : beats[nextIndex];
+      if (right && right[0] > left[0]) {
+        const fraction = (targetTick - left[0]) / (right[0] - left[0]);
+        x = left[1] + (right[1] - left[1]) * Math.max(0, Math.min(1, fraction));
       } else {
-        x = left.onNotesX;
+        x = left[1];
         if (!right) x += (line.x + line.w - x) * Math.max(0, Math.min(1,
-          (targetTick - left.beat.playbackStart) / Math.max(1, totalTicks - left.beat.playbackStart)));
+          (targetTick - left[0]) / Math.max(1, totalTicks - left[0])));
       }
     }
-    scorePlayhead.style.left = `${x}px`;
-    scorePlayhead.style.top = `${line.y}px`;
+    scorePlayhead.style.transform = `translate3d(${x + geometry.surfaceX}px, ${line.y + geometry.surfaceY}px, 0)`;
     scorePlayhead.style.height = `${line.h}px`;
     scorePlayhead.classList.remove('hidden');
-    if (autoScroll && isPlaying && barIndex !== lastCursorBar) {
+    if (autoScroll && barIndex !== lastCursorBar && line.y !== lastCursorLineY) {
       scorePlayhead.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
     }
     lastCursorBar = barIndex;
+    lastCursorLineY = line.y;
   }
 
   document.getElementById('zoomInBtn').addEventListener('click', () => {
@@ -1308,6 +1327,8 @@
     scoreAudioOffset = Number(audioOffset) || embeddedTiming.offset;
     scorePlayhead = null;
     lastCursorBar = -1;
+    lastCursorLineY = null;
+    barGeometryCache.clear();
     if (typeof alphaTab === 'undefined') {
       container.innerHTML = '<p style="padding:20px;color:#b91c1c;">Biblioteca visual AlphaTab ainda carregando. Aguarde 2 segundos e tente abrir novamente.</p>';
       return;
@@ -1335,6 +1356,7 @@
     });
 
     alphaApi.postRenderFinished.on(() => {
+      barGeometryCache.clear();
       if (!scorePlayhead || !scorePlayhead.isConnected) {
         scorePlayhead = document.createElement('div');
         scorePlayhead.className = 'score-playhead hidden';
@@ -1449,10 +1471,28 @@
   }
 
   let isPlaying = false;
+  let cursorFrame = null;
+
+  function paintScoreCursor() {
+    cursorFrame = null;
+    if (!isPlaying) return;
+    updateScorePlayhead(true);
+    cursorFrame = requestAnimationFrame(paintScoreCursor);
+  }
+
+  function startCursorAnimation() {
+    if (cursorFrame === null) cursorFrame = requestAnimationFrame(paintScoreCursor);
+  }
+
+  function stopCursorAnimation() {
+    if (cursorFrame !== null) cancelAnimationFrame(cursorFrame);
+    cursorFrame = null;
+  }
 
   function stopPlayback() {
     for (const tr of Object.values(tracks)) { if (tr.loaded) { tr.audio.pause(); tr.audio.currentTime = 0; } }
     isPlaying = false;
+    stopCursorAnimation();
     playPauseBtn.textContent = '▶ Tocar';
     seekSlider.value = 0;
     timeCurrent.textContent = '00:00';
@@ -1469,17 +1509,40 @@
       const t = master.currentTime;
       const rate = parseFloat(speedSlider.value);
       updateMixerVolumes();
-      for (const tr of Object.values(tracks)) {
-        if (tr.loaded) { tr.audio.currentTime = t; tr.audio.playbackRate = rate; await tr.audio.play(); }
+      const audios = Object.values(tracks).filter(tr => tr.loaded).map(tr => tr.audio);
+      for (const audio of audios) { audio.currentTime = t; audio.playbackRate = rate; }
+      try {
+        await Promise.all(audios.map(audio => audio.play()));
+      } catch (error) {
+        audios.forEach(audio => audio.pause());
+        alert('Não foi possível iniciar o áudio. Toque em Tocar novamente.');
+        return;
+      }
+      for (const audio of audios) {
+        if (audio !== master && Math.abs(audio.currentTime - master.currentTime) > 0.03) {
+          audio.currentTime = master.currentTime;
+        }
       }
       isPlaying = true;
       playPauseBtn.textContent = '⏸ Pausar';
+      updateScorePlayhead(true);
+      startCursorAnimation();
     } else {
       for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.pause(); }
       isPlaying = false;
+      stopCursorAnimation();
       playPauseBtn.textContent = '▶ Tocar';
+      updateScorePlayhead();
     }
   });
+
+  Object.values(tracks).forEach(tr => tr.audio.addEventListener('ended', () => {
+    if (getMasterTrack() !== tr.audio) return;
+    isPlaying = false;
+    stopCursorAnimation();
+    playPauseBtn.textContent = '▶ Tocar';
+    updateScorePlayhead();
+  }));
 
   stopBtn.addEventListener('click', stopPlayback);
 
@@ -1494,7 +1557,7 @@
     if (!master || !isFinite(master.duration)) return;
     const targetTime = (parseFloat(seekSlider.value) / 100) * master.duration;
     for (const tr of Object.values(tracks)) { if (tr.loaded) tr.audio.currentTime = targetTime; }
-    updateScorePlayhead();
+    updateScorePlayhead(true);
   });
 
   setInterval(() => {
@@ -1503,8 +1566,6 @@
     timeCurrent.textContent = formatTime(master.currentTime);
     timeTotal.textContent = formatTime(master.duration);
     seekSlider.value = (master.currentTime / master.duration) * 100;
-    updateScorePlayhead(true);
-
     if (isPlaying) {
       for (const tr of Object.values(tracks)) {
         if (tr.loaded && tr.audio !== master && Math.abs(tr.audio.currentTime - master.currentTime) > 0.08) {

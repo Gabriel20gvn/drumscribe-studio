@@ -106,6 +106,17 @@ def _download_with_pytubefix(url: str, job_dir: str) -> tuple[str, str]:
     raise RuntimeError(f"Fallback pytubefix falhou: {last_err}")
 
 
+def _is_region_restricted_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return any(phrase in message for phrase in (
+        "not available in your country",
+        "not made this video available in your country",
+        "not available in your region",
+        "geo-restricted",
+        "geo restricted",
+    ))
+
+
 def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = None) -> tuple[str, str]:
     raw_template = os.path.join(job_dir, "raw_audio.%(ext)s")
 
@@ -121,7 +132,7 @@ def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = N
         {"clients": ["web_safari", "web"], "format": "best/bestaudio"},
     ]
 
-    last_error = None
+    region_restricted = False
     title = "musica_youtube"
 
     for attempt in attempts:
@@ -171,15 +182,22 @@ def download_youtube_wav(url: str, job_dir: str, cookies_path: Optional[str] = N
             if os.path.exists(wav_path):
                 return wav_path, title
         except Exception as exc:
-            last_error = exc
+            region_restricted = region_restricted or _is_region_restricted_error(exc)
             continue
+
+    if region_restricted:
+        raise RuntimeError(
+            "Este vídeo não está disponível na região do servidor do Colab. "
+            "Para gerar a partitura, envie um arquivo de áudio/vídeo pelo campo 'Ou envie um arquivo' "
+            "ou escolha outro link disponível nessa região. Cookies não removem essa restrição."
+        )
 
     try:
         return _download_with_pytubefix(url, job_dir)
-    except Exception as ptf_exc:
+    except Exception:
         raise RuntimeError(
-            f"Não foi possível extrair o áudio deste link. "
-            f"(yt-dlp: {last_error} | pytubefix: {ptf_exc})"
+            "Não foi possível obter o áudio deste link no servidor. "
+            "Tente outro link ou envie um arquivo de áudio/vídeo pelo campo 'Ou envie um arquivo'."
         )
 
 

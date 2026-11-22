@@ -458,6 +458,7 @@
           <div id="progressFill" class="progress-bar-fill"></div>
         </div>
       </div>
+      <p id="generateError" class="hidden" role="alert" style="margin-top:12px; padding:12px; border:1px solid #ef4444; border-radius:8px; color:#fecaca; background:rgba(239,68,68,.12);"></p>
     </div>
 
     <div id="localTab" class="card hidden">
@@ -1300,6 +1301,16 @@
   const progressText = document.getElementById('progressText');
   const progressPct = document.getElementById('progressPct');
   const progressFill = document.getElementById('progressFill');
+  const generateError = document.getElementById('generateError');
+
+  function showGenerateError(error) {
+    const message = String(error || 'Falha desconhecida.');
+    generateError.textContent = /not (?:made this video )?available in your (?:country|region)|geo.?restricted/i.test(message)
+      ? "Este vídeo não está disponível na região do servidor do Colab. Envie um arquivo de áudio/vídeo pelo campo 'Ou envie um arquivo' ou teste outro link."
+      : message.slice(0, 350);
+    generateError.classList.remove('hidden');
+    progressWrap.style.display = 'none';
+  }
 
   generateBtn.addEventListener('click', async () => {
     const url = document.getElementById('ytUrl').value.trim();
@@ -1328,6 +1339,8 @@
     if (cookiesInput.files.length > 0) formData.append('cookies_file', cookiesInput.files[0]);
 
     generateBtn.disabled = true;
+    generateError.classList.add('hidden');
+    generateError.textContent = '';
     progressWrap.style.display = 'block';
     progressText.textContent = hasMedia ? 'Enviando áudio para processamento...' : 'Enviando link para processamento...';
     progressPct.textContent = '5%';
@@ -1389,13 +1402,13 @@
           } else if (st.status === 'error') {
             clearInterval(poll);
             generateBtn.disabled = false;
-            alert('Erro no servidor: ' + st.error);
+            showGenerateError(st.error || 'Erro durante o processamento.');
           }
         } catch (pollErr) {}
       }, 2500);
     } catch (err) {
       generateBtn.disabled = false;
-      alert(err.message);
+      showGenerateError(err.message);
     }
   });
 

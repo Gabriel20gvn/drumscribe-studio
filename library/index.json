@@ -13,19 +13,5 @@
       "vocals": "library/1795361378_f79240/vocals.mp3"
     },
     "score_revision": 2
-  },
-  {
-    "id": "1795359139_eff6e3",
-    "title": "O Leão E A Igreja (feat. Nívea Soares) (Ao Vivo)",
-    "bpm": 128.0,
-    "measures": 139,
-    "audio_offset_seconds": 8.14,
-    "created_at": 1795359144.696363,
-    "musicxml": "library/1795359139_eff6e3/partitura_bateria.musicxml",
-    "audio_mp3": {
-      "drums": "library/1795359139_eff6e3/drums.mp3",
-      "no_drums": "library/1795359139_eff6e3/no_drums.mp3",
-      "vocals": "library/1795359139_eff6e3/vocals.mp3"
-    }
   }
 ]

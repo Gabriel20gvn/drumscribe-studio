@@ -21,3 +21,14 @@ Aplicação web completa (Frontend + Backend Python) para baixar músicas do You
 5. O build será executado automaticamente. Ao finalizar, você terá uma URL pública para abrir direto no navegador do seu celular.
 
 > **Dica:** Na aba **Abrir do Celular / Google Drive** do site, você também pode carregar diretamente arquivos `.musicxml` e `.wav`/`.mp3` que tenha gerado anteriormente no Google Colab e salvado no seu Google Drive.
+
+## 📱 Estudar offline longe de casa
+
+O app pode funcionar como um PWA para **ler partituras já salvas e tocar os áudios baixados**, sem o PC ligado e sem internet. A geração de músicas novas continua exigindo um servidor de IA e conexão.
+
+1. Com internet no celular, abra a página HTTPS do projeto no GitHub Pages. Se ainda não estiver publicada, em **Settings → Pages** selecione **Deploy from a branch → main → / (root)**; depois abra `https://gabriel20gvn.github.io/drumscribe-studio/`.
+2. Aguarde aparecer **“Aplicativo pronto para abrir sem internet”** na biblioteca. Use **Adicionar à tela inicial** no menu do navegador para abrir como app.
+3. Na biblioteca, toque em **⬇ Salvar no celular** nas músicas desejadas. Espere a mensagem **“pronto para estudar offline”**; ela confirma que MusicXML e faixas de áudio foram guardados no próprio celular.
+4. Ative o modo avião e abra o app pelo ícone. As músicas marcadas **📱 Pronto offline** permanecem disponíveis para leitura e reprodução. Faça esse teste antes de sair de casa.
+
+Os arquivos ficam no armazenamento deste navegador e podem desaparecer se seus dados forem apagados ou se o sistema liberar espaço. A biblioteca na nuvem e o processamento da IA não funcionam sem internet. O AlphaTab 1.9.0 e suas fontes foram incluídos localmente, com suas licenças em `vendor/alphatab/`.

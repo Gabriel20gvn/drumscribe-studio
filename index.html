@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>DrumScribe Studio — Partituras de Bateria &amp; Stems</title>
-  <script src="https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.min.js"></script>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <script src="./vendor/alphatab/alphaTab.min.js"></script>
   <style>
     :root {
       --bg: #0f172a;
@@ -361,6 +364,7 @@
           <button id="refreshLibraryBtn" class="btn" type="button">🔄 Atualizar</button>
         </div>
       </div>
+      <p id="offlineStatus" role="status" style="font-size:0.82rem; color:var(--muted); margin:8px 0 0;"></p>
       <div id="libraryList" class="library-grid">
         <p style="color:var(--muted); font-size:0.88rem;">Nenhuma partitura na biblioteca ainda. Gere sua primeira música na aba <strong>🎬 Gerar Partitura</strong>!</p>
       </div>
@@ -698,27 +702,27 @@
   let activeLibraryId = null;
 
   async function cacheFromUrlsToDB(meta, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl) {
-    try {
-      const [xmlResp, drumsResp, noDrumsResp, vocalsResp] = await Promise.all([
-        fetch(xmlUrl),
-        drumsUrl ? fetch(drumsUrl) : Promise.resolve(null),
-        noDrumsUrl ? fetch(noDrumsUrl) : Promise.resolve(null),
-        vocalsUrl ? fetch(vocalsUrl) : Promise.resolve(null),
-      ]);
-      const record = {
-        id: meta.id,
-        title: meta.title,
-        bpm: meta.bpm,
-        measures: meta.measures,
-        created_at: meta.created_at || Date.now() / 1000,
-        xmlBuffer: await xmlResp.arrayBuffer(),
-        drumsBlob: drumsResp && drumsResp.ok ? await drumsResp.blob() : null,
-        noDrumsBlob: noDrumsResp && noDrumsResp.ok ? await noDrumsResp.blob() : null,
-        vocalsBlob: vocalsResp && vocalsResp.ok ? await vocalsResp.blob() : null,
-      };
-      await dbPutScore(record);
-      await refreshLibrary();
-    } catch (e) {}
+    const urls = [xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl];
+    const responses = await Promise.all(urls.map(url => url ? fetch(url) : Promise.resolve(null)));
+    if (responses.some((response, index) => urls[index] && !response.ok)) {
+      throw new Error('Não foi possível baixar todos os arquivos. Verifique a conexão e tente novamente.');
+    }
+    const [xmlResp, drumsResp, noDrumsResp, vocalsResp] = responses;
+    const record = {
+      id: meta.id,
+      title: meta.title,
+      bpm: meta.bpm,
+      measures: meta.measures,
+      created_at: meta.created_at || Date.now() / 1000,
+      xmlBuffer: await xmlResp.arrayBuffer(),
+      drumsBlob: drumsResp ? await drumsResp.blob() : null,
+      noDrumsBlob: noDrumsResp ? await noDrumsResp.blob() : null,
+      vocalsBlob: vocalsResp ? await vocalsResp.blob() : null,
+    };
+    if (!record.xmlBuffer.byteLength || !(await dbPutScore(record))) {
+      throw new Error('O celular não conseguiu guardar a música. Verifique o espaço disponível.');
+    }
+    await refreshLibrary();
   }
 
   function resolveCloudAssetUrl(relPath) {
@@ -729,6 +733,7 @@
   }
 
   async function fetchCloudCatalog() {
+    if (!navigator.onLine) return [];
     const repo = getRepoName();
     const rawUrl = `https://raw.githubusercontent.com/${repo}/main/library/index.json?t=${Date.now()}`;
     try {
@@ -755,7 +760,10 @@
         bpm: item.bpm,
         measures: item.measures,
         created_at: item.created_at || 0,
-        hasLocal: true,
+        hasLocal: Boolean(item.xmlBuffer?.byteLength),
+        hasDrums: Boolean(item.drumsBlob),
+        hasNoDrums: Boolean(item.noDrumsBlob),
+        hasVocals: Boolean(item.vocalsBlob),
         hasCloud: false,
         hasServer: false,
         cloudMeta: null,
@@ -785,7 +793,7 @@
       }
     }
 
-    if (getApiBase() || !window.location.hostname.includes('github.io')) {
+    if (navigator.onLine && (getApiBase() || !window.location.hostname.includes('github.io'))) {
       try {
         const resp = await fetchWithTimeout(apiUrl('/api/library'), {}, 3000);
         if (resp.ok) {
@@ -835,7 +843,10 @@
         : '';
       const badges = [];
       if (item.hasCloud) badges.push('<span class="badge">☁️ Nuvem (Todos dispositivos)</span>');
-      if (item.hasLocal) badges.push('<span class="badge offline">📱 Salvo Offline</span>');
+      const required = item.cloudMeta?.audio_mp3 || item.serverMeta?.audio_mp3 || {};
+      const missingAudio = Boolean((required.drums && !item.hasDrums) || (required.no_drums && !item.hasNoDrums) || (required.vocals && !item.hasVocals));
+      const readyOffline = item.hasLocal && !missingAudio;
+      if (item.hasLocal) badges.push(`<span class="badge offline">📱 ${readyOffline ? 'Pronto offline' : 'Partitura offline'}</span>`);
       if (!item.hasCloud && item.hasServer) badges.push('<span class="badge">🖥️ Servidor</span>');
 
       return `
@@ -850,6 +861,7 @@
           </div>
           <div class="lib-actions">
             <button class="btn btn-primary" onclick="openLibraryItem('${item.id}')">▶ Abrir</button>
+            ${(item.hasCloud || item.hasServer) && !readyOffline ? `<button class="btn btn-accent" onclick="saveLibraryItemOffline('${item.id}')">⬇ Salvar no celular</button>` : ''}
             <button class="btn btn-danger" onclick="removeLibraryItem('${item.id}')">🗑️</button>
           </div>
         </div>
@@ -860,6 +872,23 @@
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
   }
+
+  window.saveLibraryItemOffline = async function(id) {
+    const item = mergedLibrary.find(entry => entry.id === id);
+    if (!item) return;
+    const status = document.getElementById('offlineStatus');
+    status.textContent = `Baixando ${item.title} para este celular… Mantenha a página aberta.`;
+    try {
+      if (navigator.storage?.persist) await navigator.storage.persist();
+      const meta = item.cloudMeta || item.serverMeta;
+      const cloud = Boolean(item.cloudMeta);
+      const asset = path => !path ? null : cloud ? resolveCloudAssetUrl(path) : apiUrl(`/api/library/${id}/${path}`);
+      await cacheFromUrlsToDB(meta, asset(meta.musicxml), asset(meta.audio_mp3?.drums), asset(meta.audio_mp3?.no_drums), asset(meta.audio_mp3?.vocals));
+      status.textContent = `${item.title} está pronto para estudar offline neste celular.`;
+    } catch (error) {
+      status.textContent = error.message || 'Falha ao salvar no celular. Tente novamente.';
+    }
+  };
 
   window.openLibraryItem = async function(id) {
     stopPlayback();
@@ -909,7 +938,6 @@
       `;
       document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth' });
 
-      cacheFromUrlsToDB(m, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl);
       return;
     }
 
@@ -935,7 +963,6 @@
       `;
       document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth' });
 
-      cacheFromUrlsToDB(m, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl);
     }
   };
 
@@ -1025,7 +1052,7 @@
       core: {
         engine: 'svg',
         useWorker: false,
-        fontDirectory: 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/font/',
+        fontDirectory: new URL('./vendor/alphatab/font/', document.baseURI).href,
         logLevel: 'warning'
       },
       display: {
@@ -1263,7 +1290,8 @@
               created_at: Date.now() / 1000,
             };
             activeLibraryId = libMeta.id;
-            await cacheFromUrlsToDB(libMeta, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl);
+            try { await cacheFromUrlsToDB(libMeta, xmlUrl, drumsUrl, noDrumsUrl, vocalsUrl); }
+            catch (error) { document.getElementById('offlineStatus').textContent = error.message; }
           } else if (st.status === 'error') {
             clearInterval(poll);
             generateBtn.disabled = false;
@@ -1333,6 +1361,14 @@
     checkServerConnection();
     refreshLibrary();
   })();
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js')
+      .then(() => navigator.serviceWorker.ready)
+      .then(() => {
+        const status = document.getElementById('offlineStatus');
+        if (!status.textContent) status.textContent = 'Aplicativo pronto para abrir sem internet. Salve as músicas desejadas neste celular.';
+      }).catch(() => {}));
+  }
 </script>
 </body>
 </html>

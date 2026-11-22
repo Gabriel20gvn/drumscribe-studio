@@ -34,6 +34,8 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.mount("/vendor", StaticFiles(directory=os.path.join(BASE_DIR, "vendor")), name="vendor")
+app.mount("/icons", StaticFiles(directory=os.path.join(BASE_DIR, "icons")), name="icons")
 
 JOBS: Dict[str, Dict[str, Any]] = {}
 
@@ -100,6 +102,21 @@ async def serve_frontend():
         index_path = os.path.join(BASE_DIR, "index.html")
     with open(index_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
+
+
+@app.get("/index.html", response_class=HTMLResponse)
+async def serve_index():
+    return await serve_frontend()
+
+
+@app.get("/sw.js")
+async def serve_service_worker():
+    return FileResponse(os.path.join(BASE_DIR, "sw.js"), media_type="application/javascript")
+
+
+@app.get("/manifest.webmanifest")
+async def serve_manifest():
+    return FileResponse(os.path.join(BASE_DIR, "manifest.webmanifest"), media_type="application/manifest+json")
 
 
 @app.post("/api/process")

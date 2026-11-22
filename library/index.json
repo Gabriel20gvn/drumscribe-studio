@@ -1,19 +1,5 @@
 [
   {
-    "id": "1795355842_e4f3bc",
-    "title": "O Leão E A Igreja (feat. Nívea Soares) (Ao Vivo)",
-    "bpm": 129,
-    "measures": 140,
-    "audio_offset_seconds": 8.14,
-    "created_at": 1795355843.6601803,
-    "musicxml": "library/1795355842_e4f3bc/partitura_bateria.musicxml",
-    "audio_mp3": {
-      "drums": "library/1795355842_e4f3bc/drums.mp3",
-      "no_drums": "library/1795355842_e4f3bc/no_drums.mp3",
-      "vocals": "library/1795355842_e4f3bc/vocals.mp3"
-    }
-  },
-  {
     "id": "1795351213_78aa6a",
     "title": "Na unção de Deus - Attos2 Worship [COVER] Elaine de Jesus",
     "bpm": 136,

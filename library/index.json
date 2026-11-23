@@ -1,5 +1,19 @@
 [
   {
+    "id": "1795440286_cab177",
+    "title": "Ryan Ofei - Celebrate (Official Music Video)",
+    "bpm": 79.0,
+    "measures": 54,
+    "audio_offset_seconds": 13.17,
+    "created_at": 1795440286.9762094,
+    "musicxml": "library/1795440286_cab177/partitura_bateria.musicxml",
+    "audio_mp3": {
+      "drums": "library/1795440286_cab177/drums.mp3",
+      "no_drums": "library/1795440286_cab177/no_drums.mp3",
+      "vocals": "library/1795440286_cab177/vocals.mp3"
+    }
+  },
+  {
     "id": "1795396580_6b7002",
     "title": "MEDLEY BOA PARTE - AdCampinas - Victor Hugo",
     "bpm": 138.34,

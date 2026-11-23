@@ -1,0 +1,3741 @@
+<?xml version="1.0" encoding="utf-8"?>
+<score-partwise version="3.1">
+  <work>
+    <work-title>Ryan Ofei - Celebrate (Official Music Video)</work-title>
+  </work>
+  <identification>
+    <creator type="composer">DrumScribe AI (Demucs + ADTOF + Whisper)</creator>
+    <miscellaneous>
+      <miscellaneous-field name="drumscribe-audio-offset-seconds">13.170</miscellaneous-field>
+    </miscellaneous>
+  </identification>
+  <part-list>
+    <score-part id="P1">
+      <part-name>Bateria</part-name>
+      <score-instrument id="P1-I37">
+        <instrument-name>Bass Drum 1</instrument-name>
+      </score-instrument>
+      <midi-instrument id="P1-I37">
+        <midi-channel>10</midi-channel>
+        <midi-program>1</midi-program>
+        <midi-unpitched>37</midi-unpitched>
+      </midi-instrument>
+      <score-instrument id="P1-I39">
+        <instrument-name>Acoustic Snare</instrument-name>
+      </score-instrument>
+      <midi-instrument id="P1-I39">
+        <midi-channel>10</midi-channel>
+        <midi-program>1</midi-program>
+        <midi-unpitched>39</midi-unpitched>
+      </midi-instrument>
+      <score-instrument id="P1-I43">
+        <instrument-name>Closed Hi-Hat</instrument-name>
+      </score-instrument>
+      <midi-instrument id="P1-I43">
+        <midi-channel>10</midi-channel>
+        <midi-program>1</midi-program>
+        <midi-unpitched>43</midi-unpitched>
+      </midi-instrument>
+      <score-instrument id="P1-I48">
+        <instrument-name>Low-Mid Tom</instrument-name>
+      </score-instrument>
+      <midi-instrument id="P1-I48">
+        <midi-channel>10</midi-channel>
+        <midi-program>1</midi-program>
+        <midi-unpitched>48</midi-unpitched>
+      </midi-instrument>
+      <score-instrument id="P1-I50">
+        <instrument-name>Crash Cymbal 1</instrument-name>
+      </score-instrument>
+      <midi-instrument id="P1-I50">
+        <midi-channel>10</midi-channel>
+        <midi-program>1</midi-program>
+        <midi-unpitched>50</midi-unpitched>
+      </midi-instrument>
+    </score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>4</divisions>
+        <time>
+          <beats>4</beats>
+          <beat-type>4</beat-type>
+        </time>
+        <clef>
+          <sign>percussion</sign>
+          <line>2</line>
+        </clef>
+      </attributes>
+      <direction placement="above">
+        <direction-type>
+          <metronome>
+            <beat-unit>quarter</beat-unit>
+            <per-minute>79.0</per-minute>
+          </metronome>
+        </direction-type>
+        <sound tempo="79.0"/>
+      </direction>
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">I found my joy. I found my</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="2">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">peace. I found my</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+    </measure>
+    <measure number="3">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">healing. Hearing your</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="4">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">presence. I found my</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+    </measure>
+    <measure number="5">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">treasure. Your precious and gold.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="6">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">I found my peace. The heart of my</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+    </measure>
+    <measure number="7">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">essence. Is hearing your presence.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="8">
+      <note>
+        <rest/>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>whole</type>
+      </note>
+    </measure>
+    <measure number="9">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Like ice water on a sunny day.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <rest/>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="10">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Taste like freedom.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="11">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Opened air on a freeway.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="12">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Feels like freedom.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="13">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">School bell on the last day.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="14">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Sounds like freedom.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="15">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Can you hear it?</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="16">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">It's time to celebrate.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="17">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">There's a party</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="18">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">in the heavens Every single time a sinner saved.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="19">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">I was bossing</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="20">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">out found You called me home, we could celebrate.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <rest/>
+        <duration>3</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="21">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">There's a party</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="22">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">in the heavens Every single time a sinner saved.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="23">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">I was bossing</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="24">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">out found You called me home, we could celebrate.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="25">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Faith and purpose.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="26">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">One day in your presence. On the wrong road</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="27">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">I knew I gone too far. I</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="28">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">gave the voice to my father. Last year he</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="29">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">dealt with shun. Was calling me</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="30">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">home. He took my revenge.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+    </measure>
+    <measure number="31">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">And gave me another</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="32">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">chance.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <rest/>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>whole</type>
+      </note>
+    </measure>
+    <measure number="33">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Ice water on a sunny day.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <rest/>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="34">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Taste like freedom.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="35">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Opened air on a freeway.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="36">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Feels like freedom.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="37">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">School bell on the last day.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="38">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Sounds like freedom.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="39">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Can you hear it?</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="40">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">It's time to celebrate.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="41">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">There's a party</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="42">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">in the heavens Every single time a sinner saved.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="43">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">I was bossing</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="44">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">out found You called me home, we could celebrate.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <rest/>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="45">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">There's a party</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="46">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">in the heavens Every single time a sinner saved.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>1</voice>
+        <type>16th</type>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <chord/>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="47">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">I was bossing</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>6</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>3</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot/>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>1</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+    </measure>
+    <measure number="48">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">out found You called me home, we could celebrate.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>4</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>E</display-step>
+          <display-octave>5</display-octave>
+        </unpitched>
+        <duration>2</duration>
+        <instrument id="P1-I48"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <unpitched>
+          <display-step>F</display-step>
+          <display-octave>4</display-octave>
+        </unpitched>
+        <duration>8</duration>
+        <instrument id="P1-I37"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notehead>normal</notehead>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+      </note>
+    </measure>
+    <measure number="49">
+      <note>
+        <rest/>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>whole</type>
+      </note>
+    </measure>
+    <measure number="50">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">Mmm. Mmm.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <rest/>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>whole</type>
+      </note>
+    </measure>
+    <measure number="51">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">I was bossing</words>
+        </direction-type>
+      </direction>
+      <note>
+        <rest/>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>whole</type>
+      </note>
+    </measure>
+    <measure number="52">
+      <direction placement="above">
+        <direction-type>
+          <words font-style="italic" font-size="9">out found You called me home, we could celebrate.</words>
+        </direction-type>
+      </direction>
+      <note>
+        <rest/>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>whole</type>
+      </note>
+    </measure>
+    <measure number="53">
+      <note>
+        <rest/>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>whole</type>
+      </note>
+    </measure>
+    <measure number="54">
+      <note>
+        <rest/>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>whole</type>
+      </note>
+    </measure>
+  </part>
+</score-partwise>

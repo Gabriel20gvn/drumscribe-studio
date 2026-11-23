@@ -1,5 +1,19 @@
 [
   {
+    "id": "1795396580_6b7002",
+    "title": "MEDLEY BOA PARTE - AdCampinas - Victor Hugo",
+    "bpm": 138.34,
+    "measures": 304,
+    "audio_offset_seconds": 0.82,
+    "created_at": 1795396582.5726726,
+    "musicxml": "library/1795396580_6b7002/partitura_bateria.musicxml",
+    "audio_mp3": {
+      "drums": "library/1795396580_6b7002/drums.mp3",
+      "no_drums": "library/1795396580_6b7002/no_drums.mp3",
+      "vocals": "library/1795396580_6b7002/vocals.mp3"
+    }
+  },
+  {
     "id": "1795361378_f79240",
     "title": "O Leão E A Igreja (feat. Nívea Soares) (Ao Vivo)",
     "bpm": 128.0,

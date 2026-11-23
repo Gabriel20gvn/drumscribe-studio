@@ -117,6 +117,11 @@ async def serve_drum_grid():
     return FileResponse(os.path.join(BASE_DIR, "drum-grid.js"), media_type="application/javascript")
 
 
+@app.get("/safari-audio.js")
+async def serve_safari_audio():
+    return FileResponse(os.path.join(BASE_DIR, "safari-audio.js"), media_type="application/javascript")
+
+
 @app.get("/sw.js")
 async def serve_service_worker():
     return FileResponse(os.path.join(BASE_DIR, "sw.js"), media_type="application/javascript")

@@ -10,6 +10,7 @@
   <script src="./vendor/alphatab/alphaTab.min.js"></script>
   <script src="./score-format.js"></script>
   <script src="./drum-grid.js"></script>
+  <script src="./safari-audio.js"></script>
   <link rel="stylesheet" href="./studio.css" />
 </head>
 <body>
@@ -1180,10 +1181,12 @@
     }
   }
 
+  const stemPlayback = createStemPlayback();
+  const createTrackAudio = () => stemPlayback ? stemPlayback.createAudio() : new Audio();
   const tracks = {
-    drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
-    no_drums: { audio: new Audio(), vol: 1.0, mute: false, solo: false, loaded: false },
-    vocals: { audio: new Audio(), vol: 0.8, mute: null, solo: false, loaded: false }
+    drums: { audio: createTrackAudio(), vol: 1.0, mute: false, solo: false, loaded: false },
+    no_drums: { audio: createTrackAudio(), vol: 1.0, mute: false, solo: false, loaded: false },
+    vocals: { audio: createTrackAudio(), vol: 0.8, mute: null, solo: false, loaded: false }
   };
 
   Object.values(tracks).forEach(t => {
@@ -1279,6 +1282,7 @@
   const seekSlider = document.getElementById('seekSlider');
   const speedSlider = document.getElementById('speedSlider');
   const speedVal = document.getElementById('speedVal');
+  if (stemPlayback) speedSlider.title = 'Neste aparelho, mudar a velocidade também altera o tom do áudio.';
   const timeCurrent = document.getElementById('timeCurrent');
   const timeTotal = document.getElementById('timeTotal');
 
@@ -1327,7 +1331,9 @@
       }
     }
     const status = document.getElementById('audioStatus');
-    status.textContent = failed.length
+    status.textContent = startingPlayback && stemPlayback
+      ? 'Preparando as faixas de áudio…'
+      : failed.length
       ? `Não foi possível tocar: ${failed.join(', ')}. Abra a música novamente para tentar.`
       : !tracks.drums.loaded && master
         ? 'A faixa de bateria não está disponível neste aparelho.'
@@ -1387,6 +1393,18 @@
       updateTransportAvailability();
       updateMixerVolumes();
       const audios = available.map(track => track.audio);
+      if (stemPlayback) {
+        try {
+          await stemPlayback.prepare(audios);
+        } catch {
+          if (request !== playbackRequest) return;
+          startingPlayback = false;
+          updateTransportAvailability();
+          alert('Toque em Tocar novamente para ativar o áudio neste aparelho.');
+          return;
+        }
+        if (request !== playbackRequest) return;
+      }
       for (const audio of audios) { audio.currentTime = t; audio.playbackRate = rate; }
       const results = await Promise.allSettled(audios.map(audio => audio.play()));
       if (request !== playbackRequest) return;
